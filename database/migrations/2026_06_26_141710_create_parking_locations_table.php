@@ -15,8 +15,14 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->string('area')->nullable();
             $table->string('city')->nullable();
+
+            // PIC lokasi parkir
             $table->string('pic_name')->nullable();
+            $table->string('pic_phone', 30)->nullable();
+
+            // Tambahan cadangan kalau ada view/controller lama yang masih pakai phone
             $table->string('phone', 30)->nullable();
+
             $table->string('status')->default('Aktif');
             $table->text('description')->nullable();
             $table->timestamps();
