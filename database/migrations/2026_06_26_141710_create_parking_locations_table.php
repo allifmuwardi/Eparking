@@ -12,9 +12,11 @@ return new class extends Migration
             $table->id();
             $table->string('location_code', 50)->unique();
             $table->string('location_name');
-            $table->string('area')->nullable();
             $table->text('address')->nullable();
+            $table->string('area')->nullable();
             $table->string('city')->nullable();
+            $table->string('pic_name')->nullable();
+            $table->string('phone', 30)->nullable();
             $table->string('status')->default('Aktif');
             $table->text('description')->nullable();
             $table->timestamps();
