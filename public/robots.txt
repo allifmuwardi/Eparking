@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+Disallow: /login
+Disallow: /dashboard
+Disallow: /issue-reports
+Disallow: /traffic-reports
+Disallow: /backup-requests
+Disallow: /manage-reports
+Disallow: /technician-reports
+Disallow: /report-recaps
+Disallow: /user-management
+Disallow: /parking-locations
+Disallow: /backup-items
+Disallow: /profile
+Disallow: /notifications
+Disallow: /logout
+
+Sitemap: http://127.0.0.1:8000/sitemap.xml
