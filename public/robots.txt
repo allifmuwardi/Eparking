@@ -16,4 +16,4 @@ Disallow: /profile
 Disallow: /notifications
 Disallow: /logout
 
-Sitemap: http://127.0.0.1:8000/sitemap.xml
+Sitemap: https://eparking.up.railway.app/sitemap.xml
