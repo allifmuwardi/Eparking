@@ -681,18 +681,52 @@
         .pagination {
             gap: 5px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        .page-link {
+        .pagination .page-item {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .pagination .page-link {
+            min-width: 38px;
+            min-height: 38px;
             border-radius: 10px;
             color: var(--ep-primary-deep);
             border-color: var(--ep-border);
             font-weight: 750;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
         }
 
-        .page-item.active .page-link {
+        .pagination .page-link:hover {
+            background: #f3f8ff;
+            border-color: #b9cbea;
+            color: var(--ep-primary);
+        }
+
+        .pagination .page-item.active .page-link {
             background: var(--ep-primary);
             border-color: var(--ep-primary);
+            color: #ffffff;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            color: #9aa9c5;
+            background: #f8fbff;
+            border-color: var(--ep-border);
+        }
+
+        .pagination svg {
+            width: 14px !important;
+            height: 14px !important;
+            max-width: 14px !important;
+            max-height: 14px !important;
+            vertical-align: middle;
+            display: inline-block;
         }
 
         /*
@@ -851,6 +885,18 @@
         };
 
         $profilePhoto = $authUser->profile_photo ?? null;
+
+        $profilePhotoUrl = null;
+
+        if (!empty($profilePhoto)) {
+            if (\Illuminate\Support\Str::startsWith($profilePhoto, ['http://', 'https://'])) {
+                $profilePhotoUrl = $profilePhoto;
+            } elseif (\Illuminate\Support\Str::startsWith($profilePhoto, 'storage/')) {
+                $profilePhotoUrl = asset($profilePhoto);
+            } else {
+                $profilePhotoUrl = asset('storage/' . $profilePhoto);
+            }
+        }
 
         $pageTitle = trim($__env->yieldContent('page_title')) ?: 'Sistem Penanganan Kendala Parkir';
         $pageSubtitle = trim($__env->yieldContent('page_subtitle')) ?: 'Monitoring Operasional Parkir';
@@ -1023,8 +1069,8 @@
 
                 <a href="{{ route('profile.index') }}" class="user-profile" title="Profil Saya">
                     <div class="user-avatar">
-                        @if ($profilePhoto)
-                            <img src="{{ asset('storage/' . $profilePhoto) }}" alt="Foto Profil">
+                        @if ($profilePhotoUrl)
+                            <img src="{{ $profilePhotoUrl }}" alt="Foto Profil">
                         @else
                             {{ $initial }}
                         @endif
