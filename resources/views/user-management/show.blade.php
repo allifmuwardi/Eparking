@@ -1,52 +1,69 @@
 @extends('layouts.app')
 
 @section('title', 'Detail Akun Pengguna | Sistem Penanganan Kendala Parkir')
+@section('page_title', 'Detail Akun Pengguna')
+@section('page_subtitle', 'Informasi lengkap akun pengguna operasional')
 
 @section('content')
 @php
-    $currentRole = Auth::user()->role;
+    $currentRole = Auth::user()->role ?? '';
     $isAdminOperational = $currentRole === 'admin';
     $isManager = $currentRole === 'manajer';
 
-    $roleLabel = match ($user->role) {
+    $roleLabel = match ($user->role ?? '') {
         'petugas' => 'Petugas Parkir',
         'teknisi' => 'Teknisi Vendor',
+        'manajer' => 'Manajer Operasional',
+        'admin' => 'Admin Operasional',
         default => 'Pengguna',
     };
 
-    $roleBadgeClass = match ($user->role) {
+    $roleBadgeClass = match ($user->role ?? '') {
         'petugas' => 'bg-primary',
         'teknisi' => 'bg-info text-dark',
+        'manajer' => 'bg-warning text-dark',
+        'admin' => 'bg-dark',
         default => 'bg-secondary',
     };
 
-    $statusBadgeClass = match ($user->status) {
+    $statusBadgeClass = match ($user->status ?? '') {
         'Aktif' => 'bg-success',
         'Tidak Aktif' => 'bg-secondary',
         default => 'bg-secondary',
     };
 
     $initial = strtoupper(substr($user->full_name ?? $user->name ?? $user->username ?? 'U', 0, 1));
-    $operationalLocation = $user->operational_location_label ?? 'Belum ditentukan';
+
+    $operationalLocation = $user->operational_location_label ?? null;
+
+    if (empty($operationalLocation) && !empty($user->parkingLocation)) {
+        $operationalLocation = $user->parkingLocation->location_name ?? '-';
+
+        if (!empty($user->parkingLocation->location_code)) {
+            $operationalLocation .= ' (' . $user->parkingLocation->location_code . ')';
+        }
+    }
+
+    $operationalLocation = $operationalLocation ?: 'Belum ditentukan';
+
+    $isPetugas = ($user->role ?? '') === 'petugas';
+    $isTeknisi = ($user->role ?? '') === 'teknisi';
 @endphp
 
 <style>
-    .detail-page-header {
-        margin-bottom: 24px;
-    }
-
-    .detail-page-title {
+    .page-title-local {
         color: #071b4d;
-        font-size: 27px;
+        font-size: 26px;
         font-weight: 950;
-        letter-spacing: -0.4px;
+        letter-spacing: -0.35px;
         margin-bottom: 6px;
     }
 
-    .detail-page-subtitle {
+    .page-subtitle-local {
         color: #5f719a;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 650;
+        line-height: 1.55;
         margin-bottom: 0;
     }
 
@@ -64,57 +81,67 @@
         flex-shrink: 0;
     }
 
-    .btn-primary {
-        background: linear-gradient(135deg, #1f6de2, #0649bd);
-        border: none;
-        font-weight: 850;
-        box-shadow: 0 12px 22px rgba(13, 110, 253, 0.20);
-    }
-
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #0d63dd, #003f9d);
-    }
-
-    .btn-soft {
-        border: 1px solid #d7e3f7;
-        background: #ffffff;
-        color: #071b4d;
-        font-weight: 800;
-    }
-
-    .btn-soft:hover {
-        background: #f3f8ff;
-        border-color: #b9cbea;
-    }
-
-    .section-title {
+    .section-title-local {
         color: #071b4d;
         font-size: 18px;
         font-weight: 950;
         margin-bottom: 4px;
     }
 
-    .section-subtitle {
+    .section-subtitle-local {
         color: #7b8caf;
         font-size: 13px;
-        font-weight: 600;
+        font-weight: 650;
+        line-height: 1.5;
         margin-bottom: 0;
     }
 
-    .profile-hero {
-        background:
-            radial-gradient(circle at top right, rgba(13, 110, 253, 0.12), transparent 34%),
-            linear-gradient(180deg, #ffffff, #f8fbff);
+    .btn-soft {
         border: 1px solid #d7e3f7;
-        border-radius: 22px;
+        background: #ffffff;
+        color: #071b4d;
+        font-weight: 850;
+    }
+
+    .btn-soft:hover {
+        background: #f3f8ff;
+        border-color: #b9cbea;
+        color: #0649bd;
+    }
+
+    .profile-hero {
+        border-radius: 24px;
         padding: 24px;
+        color: #ffffff;
+        background:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.24), transparent 36%),
+            linear-gradient(135deg, #0b3969 0%, #0649bd 55%, #0d6efd 100%);
+        box-shadow: 0 22px 50px rgba(13, 110, 253, 0.20);
+        overflow: hidden;
+        position: relative;
+    }
+
+    .profile-hero::after {
+        content: "";
+        position: absolute;
+        width: 220px;
+        height: 220px;
+        right: -80px;
+        bottom: -100px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    .profile-hero-content {
+        position: relative;
+        z-index: 1;
     }
 
     .profile-avatar-lg {
         width: 98px;
         height: 98px;
-        border-radius: 26px;
-        background: linear-gradient(145deg, #0b3969, #07264c);
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.16);
         color: #ffffff;
         display: flex;
         align-items: center;
@@ -132,20 +159,31 @@
         object-fit: cover;
     }
 
+    .profile-label {
+        color: rgba(255, 255, 255, 0.76);
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 4px;
+    }
+
     .profile-name {
-        color: #071b4d;
+        color: #ffffff;
         font-size: 26px;
         font-weight: 950;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
     }
 
     .profile-meta {
-        color: #5f719a;
-        font-size: 14px;
+        color: rgba(255, 255, 255, 0.84);
+        font-size: 13px;
         font-weight: 650;
+        margin-bottom: 0;
+        line-height: 1.6;
     }
 
-    .info-card {
+    .info-box {
         border-radius: 18px;
         border: 1px solid #d7e3f7;
         background: linear-gradient(180deg, #f8fbff, #ffffff);
@@ -156,7 +194,7 @@
     .info-label {
         color: #7b8caf;
         font-size: 12px;
-        font-weight: 850;
+        font-weight: 900;
         text-transform: uppercase;
         letter-spacing: 0.04em;
         margin-bottom: 7px;
@@ -165,16 +203,15 @@
     .info-value {
         color: #071b4d;
         font-size: 15px;
-        font-weight: 900;
-        margin-bottom: 3px;
+        font-weight: 950;
+        margin-bottom: 4px;
         word-break: break-word;
     }
 
     .info-help {
-        color: #8a9abc;
+        color: #7b8caf;
         font-size: 12px;
-        font-weight: 600;
-        margin-bottom: 0;
+        font-weight: 650;
     }
 
     .location-card {
@@ -201,17 +238,18 @@
     }
 
     .activity-card {
+        height: 100%;
         border-radius: 18px;
         border: 1px solid #d7e3f7;
         background: #ffffff;
         padding: 18px;
-        height: 100%;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.04);
     }
 
     .activity-label {
         color: #7b8caf;
         font-size: 13px;
-        font-weight: 800;
+        font-weight: 850;
         margin-bottom: 8px;
     }
 
@@ -222,11 +260,37 @@
         margin-bottom: 6px;
     }
 
-    .action-card {
-        border-radius: 18px;
+    .side-card {
+        border-radius: 20px;
         border: 1px solid #d7e3f7;
         background: #ffffff;
-        padding: 18px;
+        padding: 20px;
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.05);
+    }
+
+    .side-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 12px 0;
+        border-bottom: 1px solid #edf3fc;
+    }
+
+    .side-row:last-child {
+        border-bottom: none;
+    }
+
+    .side-label {
+        color: #7b8caf;
+        font-size: 13px;
+        font-weight: 750;
+    }
+
+    .side-value {
+        color: #071b4d;
+        font-size: 13px;
+        font-weight: 950;
+        text-align: right;
     }
 
     .note-item {
@@ -270,53 +334,34 @@
         color: #0bb4d8;
     }
 
-    .password-box {
-        border-radius: 18px;
-        background: #fff6dc;
-        border: 1px solid #ffe4a3;
-        padding: 18px;
-        color: #946200;
-    }
+    @media (max-width: 768px) {
+        .page-title-local {
+            font-size: 22px;
+        }
 
-    .password-code {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: #ffffff;
-        border: 1px solid #ffe4a3;
-        border-radius: 14px;
-        padding: 10px 14px;
-        color: #b4232a;
-        font-size: 20px;
-        font-weight: 950;
-    }
+        .profile-name {
+            font-size: 22px;
+        }
 
-    .status-table th {
-        color: #7b8caf;
-        font-size: 13px;
-        font-weight: 800;
-        padding-left: 0;
-    }
-
-    .status-table td {
-        color: #071b4d;
-        font-size: 13px;
-        font-weight: 750;
+        .profile-avatar-lg {
+            width: 82px;
+            height: 82px;
+            font-size: 32px;
+        }
     }
 </style>
 
-<div class="container-fluid">
-    {{-- Header --}}
-    <div class="detail-page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
         <div class="d-flex align-items-center gap-3">
             <div class="header-icon">
                 <i class="bi bi-person-vcard"></i>
             </div>
 
             <div>
-                <h3 class="detail-page-title">Detail Akun Pengguna</h3>
-                <p class="detail-page-subtitle">
-                    Informasi akun operasional Petugas Parkir atau Teknisi Vendor.
+                <h3 class="page-title-local">Detail Akun Pengguna</h3>
+                <p class="page-subtitle-local">
+                    {{ $user->username ?? '-' }} — {{ $user->full_name ?? $user->name ?? '-' }}
                 </p>
             </div>
         </div>
@@ -325,7 +370,7 @@
             @if ($isAdminOperational)
                 <a href="{{ route('user-management.edit', $user) }}" class="btn btn-warning text-white rounded-3 px-3">
                     <i class="bi bi-pencil-square me-1"></i>
-                    Edit Akun
+                    Edit
                 </a>
             @endif
 
@@ -336,182 +381,172 @@
         </div>
     </div>
 
-    {{-- Password Awal --}}
-    @if (session('initial_password'))
-        <div class="password-box mb-4">
-            <div class="d-flex align-items-start gap-3 flex-wrap">
-                <div class="note-icon warning">
-                    <i class="bi bi-key-fill"></i>
-                </div>
-
-                <div>
-                    <div class="fw-bold mb-1">Password Awal / Password Baru</div>
-                    <div class="mb-2">
-                        Berikan password berikut kepada pengguna untuk login.
-                    </div>
-
-                    <div class="password-code">
-                        <span>{{ session('initial_password') }}</span>
-                    </div>
-
-                    <div class="small mt-2">
-                        Password ini hanya ditampilkan sekali. Database tetap menyimpan password dalam bentuk hash.
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    <div class="row g-4">
-        {{-- Left --}}
-        <div class="col-lg-8">
-            <div class="page-card p-4 mb-4">
-                <div class="profile-hero">
-                    <div class="d-flex align-items-center gap-4 flex-wrap">
+    <div class="profile-hero mb-4">
+        <div class="profile-hero-content">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex gap-3 align-items-start">
                         <div class="profile-avatar-lg">
-                            @if ($user->profile_photo)
+                            @if (!empty($user->profile_photo))
                                 <img src="{{ asset('storage/' . $user->profile_photo) }}" alt="Foto Profil">
                             @else
                                 {{ $initial }}
                             @endif
                         </div>
 
-                        <div class="flex-grow-1">
-                            <h3 class="profile-name">{{ $user->full_name ?? $user->name ?? '-' }}</h3>
-
-                            <div class="d-flex flex-wrap gap-2 mb-3">
-                                <span class="badge rounded-pill {{ $roleBadgeClass }}">
-                                    {{ $roleLabel }}
-                                </span>
-
-                                <span class="badge rounded-pill {{ $statusBadgeClass }}">
-                                    {{ $user->status ?? '-' }}
-                                </span>
-
-                                @if ($user->must_change_password ?? false)
-                                    <span class="badge rounded-pill bg-warning text-dark">
-                                        Perlu Ganti Password
-                                    </span>
-                                @endif
-                            </div>
-
-                            <div class="profile-meta">
-                                NIK Login:
-                                <span class="fw-bold text-dark">{{ $user->username ?? '-' }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Lokasi Operasional --}}
-            <div class="page-card p-4 mb-4">
-                <div class="mb-4">
-                    <h5 class="section-title">Lokasi Operasional</h5>
-                    <p class="section-subtitle">
-                        History laporan, traffic, dan backup ditampilkan berdasarkan lokasi operasional yang sama.
-                    </p>
-                </div>
-
-                <div class="location-card">
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="location-icon">
-                            <i class="bi bi-geo-alt-fill"></i>
-                        </div>
-
                         <div>
-                            <div class="info-label">Lokasi / Cabang Kerja</div>
-                            <div class="fs-5 fw-bold text-primary mb-1">
-                                {{ $operationalLocation }}
+                            <div class="profile-label">Akun Pengguna</div>
+                            <div class="profile-name">
+                                {{ $user->full_name ?? $user->name ?? '-' }}
                             </div>
-                            <div class="text-muted small">
-                                Pengguna lain dengan lokasi operasional yang sama akan melihat history operasional yang sama.
-                            </div>
+
+                            <p class="profile-meta">
+                                Login menggunakan NIK <strong>{{ $user->username ?? '-' }}</strong>
+                                sebagai <strong>{{ $roleLabel }}</strong>.
+                                Lokasi operasional: <strong>{{ $operationalLocation }}</strong>.
+                            </p>
                         </div>
                     </div>
                 </div>
+
+                <div class="col-lg-4">
+                    <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                        <span class="badge rounded-pill {{ $roleBadgeClass }}">
+                            {{ $roleLabel }}
+                        </span>
+
+                        <span class="badge rounded-pill {{ $statusBadgeClass }}">
+                            {{ $user->status ?? '-' }}
+                        </span>
+
+                        @if ($user->must_change_password ?? false)
+                            <span class="badge rounded-pill bg-warning text-dark">
+                                Perlu Ganti Password
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (session('initial_password'))
+        <div class="alert alert-warning rounded-4 border-0 mb-4">
+            <div class="fw-bold mb-1">
+                <i class="bi bi-key-fill me-1"></i>
+                Password Baru Hasil Reset
             </div>
 
-            {{-- Informasi Akun --}}
+            <div class="mb-2">
+                Berikan password ini kepada pengguna terkait. Password hanya ditampilkan sekali.
+            </div>
+
+            <div class="d-inline-flex align-items-center px-3 py-2 bg-white rounded-3 border fw-bold fs-5 text-danger">
+                {{ session('initial_password') }}
+            </div>
+        </div>
+    @endif
+
+    <div class="row g-4">
+        <div class="col-lg-8">
             <div class="page-card p-4 mb-4">
                 <div class="mb-4">
-                    <h5 class="section-title">Informasi Akun</h5>
-                    <p class="section-subtitle">
-                        Data identitas dan akses pengguna operasional.
+                    <h5 class="section-title-local">Informasi Akun</h5>
+                    <p class="section-subtitle-local">
+                        Detail identitas pengguna, role, status akun, dan kontak operasional.
                     </p>
                 </div>
 
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <div class="info-card">
-                            <div class="info-label">NIK</div>
+                        <div class="info-box">
+                            <div class="info-label">NIK / Username</div>
                             <div class="info-value">{{ $user->username ?? '-' }}</div>
-                            <p class="info-help">Digunakan untuk login ke sistem.</p>
+                            <div class="info-help">Digunakan untuk login ke sistem.</div>
                         </div>
                     </div>
 
                     <div class="col-md-6">
-                        <div class="info-card">
-                            <div class="info-label">NIP</div>
-                            <div class="info-value">{{ $user->nip ?? '-' }}</div>
-                            <p class="info-help">Disamakan dengan NIK jika tidak ada NIP khusus.</p>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="info-card">
+                        <div class="info-box">
                             <div class="info-label">Nama Lengkap</div>
                             <div class="info-value">{{ $user->full_name ?? $user->name ?? '-' }}</div>
-                            <p class="info-help">Nama pengguna operasional.</p>
+                            <div class="info-help">Nama pengguna operasional.</div>
                         </div>
                     </div>
 
                     <div class="col-md-6">
-                        <div class="info-card">
+                        <div class="info-box">
                             <div class="info-label">Role</div>
-                            <div class="mt-1">
-                                <span class="badge rounded-pill {{ $roleBadgeClass }}">
-                                    {{ $roleLabel }}
-                                </span>
-                            </div>
-                            <p class="info-help mt-2">Hak akses pengguna.</p>
+                            <span class="badge rounded-pill {{ $roleBadgeClass }}">
+                                {{ $roleLabel }}
+                            </span>
+                            <div class="info-help mt-2">Role menentukan akses menu dan fitur.</div>
                         </div>
                     </div>
 
                     <div class="col-md-6">
-                        <div class="info-card">
+                        <div class="info-box">
+                            <div class="info-label">Status Akun</div>
+                            <span class="badge rounded-pill {{ $statusBadgeClass }}">
+                                {{ $user->status ?? '-' }}
+                            </span>
+                            <div class="info-help mt-2">
+                                {{ ($user->status ?? '') === 'Aktif' ? 'Akun dapat login ke sistem.' : 'Akun tidak dapat digunakan untuk login.' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="info-box">
                             <div class="info-label">Email</div>
                             <div class="info-value">{{ $user->email ?? '-' }}</div>
-                            <p class="info-help">Kontak email.</p>
+                            <div class="info-help">Email pengguna jika tersedia.</div>
                         </div>
                     </div>
 
                     <div class="col-md-6">
-                        <div class="info-card">
+                        <div class="info-box">
                             <div class="info-label">Nomor Telepon</div>
                             <div class="info-value">{{ $user->phone ?? '-' }}</div>
-                            <p class="info-help">Kontak pengguna.</p>
+                            <div class="info-help">Kontak koordinasi pengguna.</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="location-card">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="location-icon">
+                                    <i class="bi bi-geo-alt-fill"></i>
+                                </div>
+
+                                <div>
+                                    <div class="info-label">Lokasi Operasional</div>
+                                    <div class="info-value fs-5">{{ $operationalLocation }}</div>
+                                    <div class="info-help">
+                                        Untuk Petugas Parkir, lokasi ini menentukan akses history laporan, traffic, dan backup barang.
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Aktivitas --}}
             <div class="page-card p-4">
                 <div class="mb-4">
-                    <h5 class="section-title">Aktivitas Terkait</h5>
-                    <p class="section-subtitle">
-                        Ringkasan jumlah data yang berkaitan dengan akun ini.
+                    <h5 class="section-title-local">Aktivitas Pengguna</h5>
+                    <p class="section-subtitle-local">
+                        Ringkasan aktivitas pengguna pada modul operasional parkir.
                     </p>
                 </div>
 
-                <div class="row g-3">
-                    @if ($user->role === 'petugas')
+                @if ($isPetugas)
+                    <div class="row g-3">
                         <div class="col-md-4">
                             <div class="activity-card">
                                 <div class="activity-label">Laporan Kendala Dibuat</div>
                                 <div class="activity-value text-primary">{{ $user->issue_reports_count ?? 0 }}</div>
-                                <div class="text-muted small">Berdasarkan akun pembuat.</div>
+                                <div class="text-muted small fw-semibold">Total laporan dari pengguna ini.</div>
                             </div>
                         </div>
 
@@ -519,7 +554,7 @@
                             <div class="activity-card">
                                 <div class="activity-label">Traffic Harian Dibuat</div>
                                 <div class="activity-value text-success">{{ $user->daily_traffic_reports_count ?? 0 }}</div>
-                                <div class="text-muted small">Berdasarkan akun pembuat.</div>
+                                <div class="text-muted small fw-semibold">Total laporan traffic harian.</div>
                             </div>
                         </div>
 
@@ -527,79 +562,124 @@
                             <div class="activity-card">
                                 <div class="activity-label">Permintaan Backup Dibuat</div>
                                 <div class="activity-value text-warning">{{ $user->backup_requests_count ?? 0 }}</div>
-                                <div class="text-muted small">Berdasarkan akun pembuat.</div>
+                                <div class="text-muted small fw-semibold">Total permintaan backup barang.</div>
                             </div>
                         </div>
-                    @endif
-
-                    @if ($user->role === 'teknisi')
-                        <div class="col-md-12">
+                    </div>
+                @elseif ($isTeknisi)
+                    <div class="row g-3">
+                        <div class="col-md-6">
                             <div class="activity-card">
                                 <div class="activity-label">Laporan Ditugaskan</div>
                                 <div class="activity-value text-primary">{{ $user->assigned_reports_count ?? 0 }}</div>
-                                <div class="text-muted small">Jumlah laporan yang ditugaskan ke teknisi ini.</div>
+                                <div class="text-muted small fw-semibold">Total laporan kendala yang ditugaskan.</div>
                             </div>
                         </div>
-                    @endif
-                </div>
 
-                <div class="alert alert-primary rounded-4 border-0 mt-4 mb-0">
-                    <div class="fw-bold mb-1">
-                        <i class="bi bi-info-circle-fill me-1"></i>
-                        Catatan History Lokasi
+                        <div class="col-md-6">
+                            <div class="activity-card">
+                                <div class="activity-label">Role Pengguna</div>
+                                <div class="activity-value text-info">
+                                    <i class="bi bi-tools"></i>
+                                </div>
+                                <div class="text-muted small fw-semibold">Teknisi Vendor menangani laporan dari Manajer.</div>
+                            </div>
+                        </div>
                     </div>
-                    History dashboard Petugas/Teknisi akan mengikuti lokasi operasional.
-                    Jadi pengguna berbeda dengan lokasi yang sama dapat melihat history operasional yang sama.
-                </div>
+                @else
+                    <div class="alert alert-info rounded-4 mb-0">
+                        Aktivitas operasional khusus hanya ditampilkan untuk Petugas Parkir dan Teknisi Vendor.
+                    </div>
+                @endif
             </div>
         </div>
 
-        {{-- Right --}}
         <div class="col-lg-4">
-            <div class="page-card p-4 mb-4">
-                <h5 class="section-title mb-3">Status Akun</h5>
+            <div class="side-card mb-4">
+                <h5 class="section-title-local">Informasi Sistem</h5>
+                <p class="section-subtitle-local mb-3">
+                    Ringkasan data akun pada sistem.
+                </p>
 
-                <table class="table table-borderless align-middle mb-0 status-table">
-                    <tr>
-                        <th class="ps-0">Status</th>
-                        <td class="text-end">
-                            <span class="badge rounded-pill {{ $statusBadgeClass }}">
-                                {{ $user->status ?? '-' }}
-                            </span>
-                        </td>
-                    </tr>
+                <div class="side-row">
+                    <div class="side-label">ID Pengguna</div>
+                    <div class="side-value">{{ $user->id }}</div>
+                </div>
 
-                    <tr>
-                        <th class="ps-0">Password Pertama</th>
-                        <td class="text-end">
-                            @if ($user->must_change_password ?? false)
-                                <span class="badge bg-warning text-dark rounded-pill">Belum Diganti</span>
-                            @else
-                                <span class="badge bg-success rounded-pill">Normal</span>
-                            @endif
-                        </td>
-                    </tr>
+                <div class="side-row">
+                    <div class="side-label">Dibuat</div>
+                    <div class="side-value">
+                        {{ $user->created_at?->format('d M Y H:i') ?? '-' }} WIB
+                    </div>
+                </div>
 
-                    <tr>
-                        <th class="ps-0">Lokasi</th>
-                        <td class="text-end">{{ $operationalLocation }}</td>
-                    </tr>
+                <div class="side-row">
+                    <div class="side-label">Diperbarui</div>
+                    <div class="side-value">
+                        {{ $user->updated_at?->format('d M Y H:i') ?? '-' }} WIB
+                    </div>
+                </div>
 
-                    <tr>
-                        <th class="ps-0">Dibuat</th>
-                        <td class="text-end">{{ $user->created_at?->format('d M Y H:i') ?? '-' }}</td>
-                    </tr>
+                <div class="side-row">
+                    <div class="side-label">Wajib Ganti Password</div>
+                    <div class="side-value">
+                        {{ ($user->must_change_password ?? false) ? 'Ya' : 'Tidak' }}
+                    </div>
+                </div>
+            </div>
 
-                    <tr>
-                        <th class="ps-0">Diperbarui</th>
-                        <td class="text-end">{{ $user->updated_at?->format('d M Y H:i') ?? '-' }}</td>
-                    </tr>
-                </table>
+            <div class="side-card mb-4">
+                <h5 class="section-title-local">Catatan Akses</h5>
+                <p class="section-subtitle-local mb-4">
+                    Hak akses pengguna mengikuti role dan lokasi operasional.
+                </p>
+
+                <div class="note-item">
+                    <div class="note-icon primary">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+
+                    <div>
+                        <div class="fw-bold text-dark">{{ $roleLabel }}</div>
+                        <div class="text-muted small fw-semibold">
+                            Role menentukan menu yang dapat diakses pengguna.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="note-item">
+                    <div class="note-icon success">
+                        <i class="bi bi-geo-alt"></i>
+                    </div>
+
+                    <div>
+                        <div class="fw-bold text-dark">Lokasi Operasional</div>
+                        <div class="text-muted small fw-semibold">
+                            Lokasi menjadi dasar akses data operasional pengguna.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="note-item">
+                    <div class="note-icon warning">
+                        <i class="bi bi-key"></i>
+                    </div>
+
+                    <div>
+                        <div class="fw-bold text-dark">Password</div>
+                        <div class="text-muted small fw-semibold">
+                            Password awal atau hasil reset hanya ditampilkan sekali.
+                        </div>
+                    </div>
+                </div>
             </div>
 
             @if ($isAdminOperational)
-                <div class="page-card p-4 mb-4">
-                    <h5 class="section-title mb-3">Aksi Admin Operasional</h5>
+                <div class="side-card">
+                    <h5 class="section-title-local">Aksi Admin</h5>
+                    <p class="section-subtitle-local mb-3">
+                        Kelola akun pengguna operasional.
+                    </p>
 
                     <div class="d-grid gap-2">
                         <a href="{{ route('user-management.edit', $user) }}" class="btn btn-warning text-white rounded-3">
@@ -610,11 +690,11 @@
                         <form
                             method="POST"
                             action="{{ route('user-management.reset-password', $user) }}"
-                            onsubmit="return confirm('Reset password akun ini? Password baru akan dibuat otomatis.')"
+                            onsubmit="return confirm('Yakin ingin reset password akun ini?')"
                         >
                             @csrf
 
-                            <button class="btn btn-outline-danger rounded-3 w-100">
+                            <button type="submit" class="btn btn-outline-danger rounded-3 w-100">
                                 <i class="bi bi-key me-1"></i>
                                 Reset Password
                             </button>
@@ -627,8 +707,11 @@
                         >
                             @csrf
 
-                            <button class="btn {{ $user->status === 'Aktif' ? 'btn-outline-secondary' : 'btn-outline-success' }} rounded-3 w-100">
-                                @if ($user->status === 'Aktif')
+                            <button
+                                type="submit"
+                                class="btn {{ ($user->status ?? '') === 'Aktif' ? 'btn-outline-secondary' : 'btn-outline-success' }} rounded-3 w-100"
+                            >
+                                @if (($user->status ?? '') === 'Aktif')
                                     <i class="bi bi-person-x me-1"></i>
                                     Nonaktifkan Akun
                                 @else
@@ -637,76 +720,26 @@
                                 @endif
                             </button>
                         </form>
+
+                        <a href="{{ route('user-management.index') }}" class="btn btn-soft rounded-3">
+                            <i class="bi bi-arrow-left me-1"></i>
+                            Kembali ke Daftar
+                        </a>
                     </div>
 
-                    <div class="alert alert-warning rounded-4 border-0 mt-3 mb-0">
-                        <div class="fw-bold mb-1">Catatan</div>
-                        Akun tidak dihapus permanen agar riwayat laporan tetap aman.
+                    <div class="alert alert-warning rounded-4 mt-3 mb-0">
+                        Untuk akun yang tidak digunakan sementara, lebih aman ubah status menjadi
+                        <b>Tidak Aktif</b> daripada menghapus data.
                     </div>
                 </div>
-            @endif
-
-            @if ($isManager)
-                <div class="page-card p-4 mb-4">
-                    <h5 class="section-title mb-2">Akses Manajer</h5>
-
-                    <div class="alert alert-primary rounded-4 border-0 mb-0">
+            @else
+                <div class="side-card">
+                    <h5 class="section-title-local">Akses Manajer</h5>
+                    <p class="section-subtitle-local mb-0">
                         Manajer Operasional hanya dapat melihat data pengguna. Perubahan akun dilakukan oleh Admin Operasional.
-                    </div>
+                    </p>
                 </div>
             @endif
-
-            <div class="page-card p-4">
-                <h5 class="section-title mb-3">Informasi Sistem</h5>
-
-                <div class="note-item">
-                    <div class="note-icon primary">
-                        <i class="bi bi-person-badge"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold">Login dengan NIK</div>
-                        <div class="text-muted small">
-                            Pengguna login menggunakan NIK: {{ $user->username ?? '-' }}.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="note-item">
-                    <div class="note-icon success">
-                        <i class="bi bi-shield-check"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold">Hak Akses Role</div>
-                        <div class="text-muted small">
-                            Role akun ini adalah {{ $roleLabel }}.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="note-item">
-                    <div class="note-icon info">
-                        <i class="bi bi-geo-alt"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold">Lokasi Operasional</div>
-                        <div class="text-muted small">
-                            Lokasi menentukan history operasional yang dapat dilihat pengguna.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="note-item">
-                    <div class="note-icon warning">
-                        <i class="bi bi-key"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold">Password Awal</div>
-                        <div class="text-muted small">
-                            Password awal atau hasil reset hanya ditampilkan sekali setelah dibuat.
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>

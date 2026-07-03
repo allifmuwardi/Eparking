@@ -1,12 +1,32 @@
 @extends('layouts.app')
 
 @section('title', 'Kelola Akun Pengguna | Sistem Penanganan Kendala Parkir')
+@section('page_title', 'Kelola Akun Pengguna')
+@section('page_subtitle', 'Pengelolaan akun Petugas Parkir dan Teknisi Vendor')
 
 @section('content')
 @php
-    $currentRole = Auth::user()->role;
+    $currentRole = Auth::user()->role ?? '';
     $isAdminOperational = $currentRole === 'admin';
     $isManager = $currentRole === 'manajer';
+
+    $searchValue = $search ?? request('search');
+    $roleValue = $role ?? request('role');
+    $statusValue = $status ?? request('status');
+
+    $activeFilterCount = 0;
+
+    if (!empty($searchValue)) {
+        $activeFilterCount++;
+    }
+
+    if (!empty($roleValue)) {
+        $activeFilterCount++;
+    }
+
+    if (!empty($statusValue)) {
+        $activeFilterCount++;
+    }
 
     $roleLabel = function ($role) {
         return match ($role) {
@@ -22,6 +42,8 @@
         return match ($role) {
             'petugas' => 'bg-primary',
             'teknisi' => 'bg-info text-dark',
+            'manajer' => 'bg-warning text-dark',
+            'admin' => 'bg-dark',
             default => 'bg-secondary',
         };
     };
@@ -33,191 +55,451 @@
             default => 'bg-secondary',
         };
     };
-
-    $activeFilterCount = 0;
-
-    if (!empty($search)) {
-        $activeFilterCount++;
-    }
-
-    if (!empty($role)) {
-        $activeFilterCount++;
-    }
-
-    if (!empty($status)) {
-        $activeFilterCount++;
-    }
 @endphp
 
-<div class="container-fluid">
+<style>
+    .page-title-local {
+        color: #071b4d;
+        font-size: 26px;
+        font-weight: 950;
+        letter-spacing: -0.35px;
+        margin-bottom: 6px;
+    }
 
-    {{-- Header --}}
+    .page-subtitle-local {
+        color: #5f719a;
+        font-size: 14px;
+        font-weight: 650;
+        line-height: 1.55;
+        margin-bottom: 0;
+    }
+
+    .header-icon {
+        width: 58px;
+        height: 58px;
+        border-radius: 18px;
+        background: linear-gradient(145deg, #1f6de2, #0649bd);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 27px;
+        box-shadow: 0 14px 28px rgba(13, 110, 253, 0.22);
+        flex-shrink: 0;
+    }
+
+    .section-title-local {
+        color: #071b4d;
+        font-size: 18px;
+        font-weight: 950;
+        margin-bottom: 4px;
+    }
+
+    .section-subtitle-local {
+        color: #7b8caf;
+        font-size: 13px;
+        font-weight: 650;
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+
+    .btn-soft {
+        border: 1px solid #d7e3f7;
+        background: #ffffff;
+        color: #071b4d;
+        font-weight: 850;
+    }
+
+    .btn-soft:hover {
+        background: #f3f8ff;
+        border-color: #b9cbea;
+        color: #0649bd;
+    }
+
+    .initial-password-card {
+        border-radius: 20px;
+        border: 1px solid #ffe4a3;
+        background:
+            radial-gradient(circle at top right, rgba(255, 193, 7, 0.16), transparent 36%),
+            linear-gradient(180deg, #fffaf0, #ffffff);
+        padding: 20px;
+    }
+
+    .initial-password-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 17px;
+        background: linear-gradient(145deg, #ffc107, #ef9f00);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+        box-shadow: 0 14px 26px rgba(255, 193, 7, 0.24);
+    }
+
+    .password-display {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 14px;
+        border: 1px solid #ffe4a3;
+        background: #ffffff;
+        color: #dc3545;
+        font-size: 22px;
+        font-weight: 950;
+        letter-spacing: 0.04em;
+    }
+
+    .access-info-card {
+        border-radius: 20px;
+        border: 1px solid #b9cbea;
+        background:
+            radial-gradient(circle at top right, rgba(13, 110, 253, 0.14), transparent 36%),
+            linear-gradient(180deg, #f8fbff, #ffffff);
+        padding: 20px;
+    }
+
+    .access-info-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 17px;
+        background: linear-gradient(145deg, #1f6de2, #0649bd);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+        box-shadow: 0 14px 26px rgba(13, 110, 253, 0.20);
+    }
+
+    .access-info-label {
+        color: #7b8caf;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 4px;
+    }
+
+    .access-info-value {
+        color: #071b4d;
+        font-size: 18px;
+        font-weight: 950;
+        margin-bottom: 3px;
+    }
+
+    .summary-card {
+        height: 100%;
+        border-radius: 20px;
+        border: 1px solid #d7e3f7;
+        background: linear-gradient(180deg, #ffffff, #f8fbff);
+        padding: 20px;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.05);
+    }
+
+    .summary-label {
+        color: #7b8caf;
+        font-size: 13px;
+        font-weight: 850;
+        margin-bottom: 6px;
+    }
+
+    .summary-value {
+        color: #071b4d;
+        font-size: 28px;
+        font-weight: 950;
+        line-height: 1.1;
+        margin-bottom: 0;
+    }
+
+    .summary-help {
+        color: #7b8caf;
+        font-size: 12px;
+        font-weight: 650;
+        margin-top: 6px;
+    }
+
+    .summary-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+
+    .summary-icon.primary {
+        background: #eaf3ff;
+        color: #0d6efd;
+    }
+
+    .summary-icon.success {
+        background: #e7f7ee;
+        color: #198754;
+    }
+
+    .summary-icon.info {
+        background: #e5f8ff;
+        color: #0bb4d8;
+    }
+
+    .summary-icon.warning {
+        background: #fff6dc;
+        color: #d99a00;
+    }
+
+    .user-table thead th {
+        color: #071b4d;
+        font-size: 12px;
+        font-weight: 950;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        background: #f4f8ff;
+        border-bottom: 1px solid #d7e3f7;
+        white-space: nowrap;
+    }
+
+    .user-table tbody td {
+        color: #071b4d;
+        font-size: 13px;
+        font-weight: 650;
+        border-bottom: 1px solid #edf3fc;
+        vertical-align: middle;
+    }
+
+    .user-table tbody tr:hover {
+        background: #f8fbff;
+    }
+
+    .user-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 16px;
+        background: linear-gradient(145deg, #0b3969, #07264c);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 950;
+        overflow: hidden;
+        flex-shrink: 0;
+        box-shadow: 0 10px 20px rgba(7, 38, 76, 0.18);
+    }
+
+    .user-avatar img {
+        width: 44px;
+        height: 44px;
+        object-fit: cover;
+    }
+
+    .user-name {
+        color: #071b4d;
+        font-size: 14px;
+        font-weight: 950;
+        margin-bottom: 2px;
+    }
+
+    .muted-small {
+        color: #7b8caf;
+        font-size: 12px;
+        font-weight: 650;
+    }
+
+    .empty-state {
+        padding: 56px 16px;
+        text-align: center;
+        color: #7b8caf;
+    }
+
+    .empty-state-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 24px;
+        background: #eaf3ff;
+        color: #0d6efd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 34px;
+        margin: 0 auto 16px;
+    }
+
+    @media (max-width: 768px) {
+        .page-title-local {
+            font-size: 22px;
+        }
+
+        .summary-value {
+            font-size: 24px;
+        }
+    }
+</style>
+
+<div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-        <div>
-            <div class="d-flex align-items-center gap-3">
-                <div class="d-flex align-items-center justify-content-center rounded-4 bg-primary text-white"
-                     style="width: 56px; height: 56px;">
-                    <i class="bi bi-people fs-3"></i>
-                </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="header-icon">
+                <i class="bi bi-people"></i>
+            </div>
 
-                <div>
-                    <h3 class="fw-bold mb-1">
-                        @if ($isAdminOperational)
-                            Kelola Akun Pengguna
-                        @else
-                            Data Pengguna Operasional
-                        @endif
-                    </h3>
+            <div>
+                <h3 class="page-title-local">
+                    @if ($isAdminOperational)
+                        Kelola Akun Pengguna
+                    @else
+                        Data Pengguna Operasional
+                    @endif
+                </h3>
 
-                    <p class="text-muted mb-0">
-                        @if ($isAdminOperational)
-                            Admin Operasional dapat membuat, mengubah, reset password, dan menonaktifkan akun Petugas Parkir atau Teknisi Vendor.
-                        @else
-                            Manajer Operasional dapat melihat data pengguna operasional sebagai kebutuhan monitoring.
-                        @endif
-                    </p>
-                </div>
+                <p class="page-subtitle-local">
+                    @if ($isAdminOperational)
+                        Admin Operasional dapat membuat, mengubah, reset password, dan menonaktifkan akun Petugas Parkir atau Teknisi Vendor.
+                    @else
+                        Manajer Operasional dapat melihat data pengguna operasional untuk kebutuhan monitoring.
+                    @endif
+                </p>
             </div>
         </div>
 
-        <div class="d-flex flex-wrap gap-2">
-            @if ($isAdminOperational)
-                <a href="{{ route('user-management.create') }}" class="btn btn-primary rounded-3">
-                    <i class="bi bi-person-plus me-1"></i>
-                    Tambah Akun
-                </a>
-            @endif
-        </div>
+        @if ($isAdminOperational)
+            <a href="{{ route('user-management.create') }}" class="btn btn-primary rounded-3 px-3">
+                <i class="bi bi-person-plus me-1"></i>
+                Tambah Akun
+            </a>
+        @endif
     </div>
 
-    {{-- Info Password Awal --}}
     @if (session('initial_password'))
-        <div class="alert alert-warning rounded-4 border-0 shadow-sm mb-4">
+        <div class="initial-password-card mb-4">
             <div class="d-flex align-items-start gap-3">
-                <div class="d-flex align-items-center justify-content-center rounded-circle bg-dark text-white"
-                     style="width: 42px; height: 42px;">
+                <div class="initial-password-icon">
                     <i class="bi bi-key-fill"></i>
                 </div>
 
                 <div>
-                    <div class="fw-bold mb-1">Password Awal Pengguna</div>
-                    <div class="mb-2">
-                        Password awal berhasil dibuat. Berikan password ini kepada pengguna terkait.
+                    <div class="fw-bold text-warning mb-1">Password Awal Pengguna</div>
+                    <div class="text-muted small fw-semibold mb-2">
+                        Password awal berhasil dibuat. Berikan password ini kepada pengguna terkait untuk login pertama kali.
                     </div>
 
-                    <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3 bg-white border">
-                        <span class="text-muted small">Password:</span>
-                        <span class="fw-bold fs-5 text-danger">{{ session('initial_password') }}</span>
+                    <div class="password-display">
+                        {{ session('initial_password') }}
                     </div>
 
-                    <div class="text-muted small mt-2">
-                        Password ini tidak disimpan dalam bentuk teks biasa di database. Simpan atau catat sebelum meninggalkan halaman.
+                    <div class="text-muted small fw-semibold mt-2">
+                        Password ini hanya ditampilkan sekali dan database tetap menyimpan password dalam bentuk hash.
                     </div>
                 </div>
             </div>
         </div>
     @endif
 
-    {{-- Summary Cards --}}
+    <div class="access-info-card mb-4">
+        <div class="d-flex align-items-start gap-3">
+            <div class="access-info-icon">
+                <i class="bi bi-shield-check"></i>
+            </div>
+
+            <div>
+                <div class="access-info-label">Hak Akses Modul</div>
+                <div class="access-info-value">
+                    {{ $isAdminOperational ? 'Admin Operasional' : 'Manajer Operasional' }}
+                </div>
+
+                <div class="text-muted small fw-semibold">
+                    @if ($isAdminOperational)
+                        Admin Operasional mengelola akun Petugas Parkir dan Teknisi Vendor. Login pengguna menggunakan NIK.
+                    @else
+                        Manajer Operasional hanya melihat data pengguna. Perubahan akun tetap dilakukan oleh Admin Operasional.
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="page-card p-4 h-100">
-                <div class="d-flex justify-content-between align-items-center">
+        <div class="col-xl-3 col-md-6">
+            <div class="summary-card">
+                <div class="d-flex justify-content-between align-items-start gap-3">
                     <div>
-                        <div class="text-muted small mb-1">Total Pengguna</div>
-                        <h4 class="fw-bold mb-0">{{ number_format($summary['total'] ?? 0) }}</h4>
+                        <div class="summary-label">Total Pengguna</div>
+                        <h4 class="summary-value">{{ number_format($summary['total'] ?? 0) }}</h4>
+                        <div class="summary-help">Seluruh akun operasional</div>
                     </div>
 
-                    <div class="d-flex align-items-center justify-content-center rounded-4 bg-primary bg-opacity-10 text-primary"
-                         style="width: 48px; height: 48px;">
-                        <i class="bi bi-people fs-4"></i>
+                    <div class="summary-icon primary">
+                        <i class="bi bi-people"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-3">
-            <div class="page-card p-4 h-100">
-                <div class="d-flex justify-content-between align-items-center">
+        <div class="col-xl-3 col-md-6">
+            <div class="summary-card">
+                <div class="d-flex justify-content-between align-items-start gap-3">
                     <div>
-                        <div class="text-muted small mb-1">Akun Aktif</div>
-                        <h4 class="fw-bold mb-0 text-success">{{ number_format($summary['active'] ?? 0) }}</h4>
+                        <div class="summary-label">Akun Aktif</div>
+                        <h4 class="summary-value text-success">{{ number_format($summary['active'] ?? 0) }}</h4>
+                        <div class="summary-help">Dapat login ke sistem</div>
                     </div>
 
-                    <div class="d-flex align-items-center justify-content-center rounded-4 bg-success bg-opacity-10 text-success"
-                         style="width: 48px; height: 48px;">
-                        <i class="bi bi-person-check fs-4"></i>
+                    <div class="summary-icon success">
+                        <i class="bi bi-person-check"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-3">
-            <div class="page-card p-4 h-100">
-                <div class="d-flex justify-content-between align-items-center">
+        <div class="col-xl-3 col-md-6">
+            <div class="summary-card">
+                <div class="d-flex justify-content-between align-items-start gap-3">
                     <div>
-                        <div class="text-muted small mb-1">Petugas Parkir</div>
-                        <h4 class="fw-bold mb-0 text-primary">{{ number_format($summary['petugas'] ?? 0) }}</h4>
+                        <div class="summary-label">Petugas Parkir</div>
+                        <h4 class="summary-value text-primary">{{ number_format($summary['petugas'] ?? 0) }}</h4>
+                        <div class="summary-help">Akun role Petugas</div>
                     </div>
 
-                    <div class="d-flex align-items-center justify-content-center rounded-4 bg-primary bg-opacity-10 text-primary"
-                         style="width: 48px; height: 48px;">
-                        <i class="bi bi-person-badge fs-4"></i>
+                    <div class="summary-icon primary">
+                        <i class="bi bi-person-badge"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-3">
-            <div class="page-card p-4 h-100">
-                <div class="d-flex justify-content-between align-items-center">
+        <div class="col-xl-3 col-md-6">
+            <div class="summary-card">
+                <div class="d-flex justify-content-between align-items-start gap-3">
                     <div>
-                        <div class="text-muted small mb-1">Teknisi Vendor</div>
-                        <h4 class="fw-bold mb-0 text-info">{{ number_format($summary['teknisi'] ?? 0) }}</h4>
+                        <div class="summary-label">Teknisi Vendor</div>
+                        <h4 class="summary-value text-info">{{ number_format($summary['teknisi'] ?? 0) }}</h4>
+                        <div class="summary-help">Akun role Teknisi</div>
                     </div>
 
-                    <div class="d-flex align-items-center justify-content-center rounded-4 bg-info bg-opacity-10 text-info"
-                         style="width: 48px; height: 48px;">
-                        <i class="bi bi-tools fs-4"></i>
+                    <div class="summary-icon info">
+                        <i class="bi bi-tools"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- Informasi Role --}}
-    @if ($isManager)
-        <div class="alert alert-primary rounded-4 border-0 mb-4">
-            <div class="fw-bold mb-1">
-                <i class="bi bi-info-circle-fill me-1"></i>
-                Akses Manajer Operasional
-            </div>
-            Manajer Operasional hanya dapat melihat data pengguna operasional. Pengelolaan akun dilakukan oleh Admin Operasional.
-        </div>
-    @endif
-
-    @if ($isAdminOperational)
-        <div class="alert alert-info rounded-4 border-0 mb-4">
-            <div class="fw-bold mb-1">
-                <i class="bi bi-info-circle-fill me-1"></i>
-                Akses Admin Operasional
-            </div>
-            Admin Operasional dapat membuat akun Petugas Parkir dan Teknisi Vendor. Password awal akan dibuat otomatis oleh sistem.
-        </div>
-    @endif
-
-    {{-- Filter --}}
     <div class="page-card p-4 mb-4">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
             <div>
-                <h5 class="fw-bold mb-1">Filter Pengguna</h5>
-                <p class="text-muted small mb-0">
-                    Cari berdasarkan NIK, NIP, nama lengkap, email, atau nomor telepon.
+                <h5 class="section-title-local">Filter Pengguna</h5>
+                <p class="section-subtitle-local">
+                    Cari berdasarkan NIK, nama lengkap, email, nomor telepon, role, atau status akun.
                 </p>
             </div>
 
-            @if (!empty($search) || !empty($role) || !empty($status))
-                <a href="{{ route('user-management.index') }}" class="btn btn-light border rounded-3">
+            @if ($activeFilterCount > 0)
+                <a href="{{ route('user-management.index') }}" class="btn btn-soft rounded-3">
                     <i class="bi bi-arrow-clockwise me-1"></i>
                     Reset Filter
                 </a>
@@ -227,23 +509,25 @@
         <form method="GET" action="{{ route('user-management.index') }}" class="row g-3">
             <div class="col-md-5">
                 <label class="form-label">Pencarian</label>
+
                 <input
                     type="text"
                     name="search"
-                    value="{{ $search }}"
-                    class="form-control rounded-3"
+                    value="{{ $searchValue }}"
+                    class="form-control"
                     placeholder="Cari NIK, nama, email, telepon..."
                 >
             </div>
 
             <div class="col-md-3">
                 <label class="form-label">Role</label>
-                <select name="role" class="form-select rounded-3">
+
+                <select name="role" class="form-select">
                     <option value="">Semua Role</option>
-                    <option value="petugas" {{ ($role ?? '') === 'petugas' ? 'selected' : '' }}>
+                    <option value="petugas" {{ $roleValue === 'petugas' ? 'selected' : '' }}>
                         Petugas Parkir
                     </option>
-                    <option value="teknisi" {{ ($role ?? '') === 'teknisi' ? 'selected' : '' }}>
+                    <option value="teknisi" {{ $roleValue === 'teknisi' ? 'selected' : '' }}>
                         Teknisi Vendor
                     </option>
                 </select>
@@ -251,12 +535,13 @@
 
             <div class="col-md-2">
                 <label class="form-label">Status</label>
-                <select name="status" class="form-select rounded-3">
+
+                <select name="status" class="form-select">
                     <option value="">Semua Status</option>
-                    <option value="Aktif" {{ ($status ?? '') === 'Aktif' ? 'selected' : '' }}>
+                    <option value="Aktif" {{ $statusValue === 'Aktif' ? 'selected' : '' }}>
                         Aktif
                     </option>
-                    <option value="Tidak Aktif" {{ ($status ?? '') === 'Tidak Aktif' ? 'selected' : '' }}>
+                    <option value="Tidak Aktif" {{ $statusValue === 'Tidak Aktif' ? 'selected' : '' }}>
                         Tidak Aktif
                     </option>
                 </select>
@@ -264,72 +549,97 @@
 
             <div class="col-md-2 d-grid">
                 <label class="form-label d-none d-md-block">&nbsp;</label>
+
                 <button class="btn btn-primary rounded-3">
                     <i class="bi bi-search me-1"></i>
                     Terapkan
                 </button>
             </div>
         </form>
+
+        @if ($activeFilterCount > 0)
+            <div class="mt-3 small text-muted fw-semibold">
+                <i class="bi bi-funnel me-1"></i>
+                Filter aktif: <b>{{ $activeFilterCount }}</b>
+            </div>
+        @endif
     </div>
 
-    {{-- Table --}}
     <div class="page-card p-4">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
             <div>
-                <h5 class="fw-bold mb-1">Daftar Pengguna Operasional</h5>
-                <p class="text-muted small mb-0">
-                    Menampilkan akun Petugas Parkir dan Teknisi Vendor.
+                <h5 class="section-title-local">Daftar Pengguna Operasional</h5>
+                <p class="section-subtitle-local">
+                    Menampilkan akun Petugas Parkir dan Teknisi Vendor sesuai hak akses pengguna.
                 </p>
             </div>
 
-            <div class="text-muted small">
-                Filter aktif: <b>{{ $activeFilterCount }}</b>
+            <div class="text-muted small fw-semibold">
+                Menampilkan
+                <b>{{ $users->firstItem() ?? 0 }}</b>
+                sampai
+                <b>{{ $users->lastItem() ?? 0 }}</b>
+                dari
+                <b>{{ $users->total() }}</b>
+                data
             </div>
         </div>
 
         <div class="table-responsive">
-            <table class="table align-middle">
+            <table class="table user-table align-middle">
                 <thead>
                     <tr>
                         <th style="width: 60px;">No</th>
                         <th>Pengguna</th>
                         <th>NIK</th>
                         <th>Role</th>
+                        <th>Lokasi</th>
                         <th>Kontak</th>
                         <th>Status</th>
-                        <th>Tanggal Dibuat</th>
-                        <th class="text-end" style="width: 260px;">Aksi</th>
+                        <th>Dibuat</th>
+                        <th class="text-end" style="width: 250px;">Aksi</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     @forelse ($users as $item)
+                        @php
+                            $initial = strtoupper(substr($item->full_name ?? $item->name ?? $item->username ?? 'U', 0, 1));
+
+                            $locationLabel = $item->operational_location_label ?? null;
+
+                            if (empty($locationLabel) && !empty($item->parkingLocation)) {
+                                $locationLabel = $item->parkingLocation->location_name ?? '-';
+
+                                if (!empty($item->parkingLocation->location_code)) {
+                                    $locationLabel .= ' (' . $item->parkingLocation->location_code . ')';
+                                }
+                            }
+
+                            $locationLabel = $locationLabel ?: 'Belum ditentukan';
+                        @endphp
+
                         <tr>
                             <td class="text-muted">
-                                {{ $users->firstItem() + $loop->index }}
+                                {{ ($users->firstItem() ?? 1) + $loop->index }}
                             </td>
 
                             <td>
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary text-white fw-bold"
-                                         style="width: 42px; height: 42px;">
-                                        @if ($item->profile_photo)
-                                            <img
-                                                src="{{ asset('storage/' . $item->profile_photo) }}"
-                                                alt="Foto Profil"
-                                                class="rounded-circle"
-                                                style="width: 42px; height: 42px; object-fit: cover;"
-                                            >
+                                    <div class="user-avatar">
+                                        @if (!empty($item->profile_photo))
+                                            <img src="{{ asset('storage/' . $item->profile_photo) }}" alt="Foto Profil">
                                         @else
-                                            {{ strtoupper(substr($item->full_name ?? $item->name ?? $item->username ?? 'U', 0, 1)) }}
+                                            {{ $initial }}
                                         @endif
                                     </div>
 
                                     <div>
-                                        <div class="fw-bold">
+                                        <div class="user-name">
                                             {{ $item->full_name ?? $item->name ?? '-' }}
                                         </div>
-                                        <div class="text-muted small">
+
+                                        <div class="muted-small">
                                             {{ $item->email ?? 'Email belum diisi' }}
                                         </div>
                                     </div>
@@ -337,11 +647,12 @@
                             </td>
 
                             <td>
-                                <div class="fw-semibold">
+                                <div class="fw-bold">
                                     {{ $item->username ?? '-' }}
                                 </div>
-                                <div class="text-muted small">
-                                    NIP: {{ $item->nip ?? '-' }}
+
+                                <div class="muted-small">
+                                    Login menggunakan NIK
                                 </div>
                             </td>
 
@@ -353,9 +664,16 @@
 
                             <td>
                                 <div class="fw-semibold">
+                                    {{ $locationLabel }}
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="fw-semibold">
                                     {{ $item->phone ?? '-' }}
                                 </div>
-                                <div class="text-muted small">
+
+                                <div class="muted-small">
                                     Kontak pengguna
                                 </div>
                             </td>
@@ -366,7 +684,7 @@
                                 </span>
 
                                 @if ($item->must_change_password ?? false)
-                                    <div class="text-warning small mt-1">
+                                    <div class="text-warning small fw-semibold mt-1">
                                         <i class="bi bi-key me-1"></i>
                                         Perlu ganti password
                                     </div>
@@ -374,35 +692,45 @@
                             </td>
 
                             <td>
-                                <div class="fw-semibold">
+                                <div class="fw-bold">
                                     {{ $item->created_at?->format('d M Y') ?? '-' }}
                                 </div>
-                                <div class="text-muted small">
-                                    {{ $item->created_at?->format('H:i') ?? '-' }}
+
+                                <div class="muted-small">
+                                    {{ $item->created_at?->format('H:i') ?? '-' }} WIB
                                 </div>
                             </td>
 
                             <td class="text-end">
                                 <div class="d-flex justify-content-end flex-wrap gap-1">
-                                    <a href="{{ route('user-management.show', $item) }}"
-                                       class="btn btn-sm btn-outline-primary rounded-3">
+                                    <a
+                                        href="{{ route('user-management.show', $item) }}"
+                                        class="btn btn-sm btn-outline-primary rounded-3"
+                                    >
                                         <i class="bi bi-eye me-1"></i>
                                         Detail
                                     </a>
 
                                     @if ($isAdminOperational)
-                                        <a href="{{ route('user-management.edit', $item) }}"
-                                           class="btn btn-sm btn-warning text-white rounded-3">
+                                        <a
+                                            href="{{ route('user-management.edit', $item) }}"
+                                            class="btn btn-sm btn-warning text-white rounded-3"
+                                        >
                                             <i class="bi bi-pencil-square me-1"></i>
                                             Edit
                                         </a>
 
-                                        <form method="POST"
-                                              action="{{ route('user-management.toggle-status', $item) }}"
-                                              onsubmit="return confirm('Yakin ingin mengubah status akun ini?')">
+                                        <form
+                                            method="POST"
+                                            action="{{ route('user-management.toggle-status', $item) }}"
+                                            onsubmit="return confirm('Yakin ingin mengubah status akun ini?')"
+                                        >
                                             @csrf
 
-                                            <button class="btn btn-sm {{ $item->status === 'Aktif' ? 'btn-outline-secondary' : 'btn-outline-success' }} rounded-3">
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm {{ $item->status === 'Aktif' ? 'btn-outline-secondary' : 'btn-outline-success' }} rounded-3"
+                                            >
                                                 @if ($item->status === 'Aktif')
                                                     <i class="bi bi-person-x me-1"></i>
                                                     Nonaktif
@@ -418,18 +746,18 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8">
-                                <div class="text-center text-muted py-5">
-                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            <td colspan="9">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">
+                                        <i class="bi bi-inbox"></i>
+                                    </div>
 
-                                    <h6 class="fw-bold mb-1">Belum ada data pengguna</h6>
+                                    <h6 class="fw-bold mb-1 text-dark">
+                                        Belum ada data pengguna
+                                    </h6>
 
                                     <p class="mb-3">
-                                        @if ($isAdminOperational)
-                                            Silakan buat akun Petugas Parkir atau Teknisi Vendor terlebih dahulu.
-                                        @else
-                                            Belum ada data pengguna operasional yang dapat ditampilkan.
-                                        @endif
+                                        Data pengguna operasional belum tersedia atau tidak sesuai filter.
                                     </p>
 
                                     @if ($isAdminOperational)

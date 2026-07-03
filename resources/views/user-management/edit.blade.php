@@ -1,25 +1,55 @@
 @extends('layouts.app')
 
 @section('title', 'Edit Akun Pengguna | Sistem Penanganan Kendala Parkir')
+@section('page_title', 'Edit Akun Pengguna')
+@section('page_subtitle', 'Perbarui data akun Petugas Parkir dan Teknisi Vendor')
 
 @section('content')
-<style>
-    .form-page-header {
-        margin-bottom: 24px;
+@php
+    $selectedParkingLocationId = old('parking_location_id', $user->parking_location_id);
+    $initial = strtoupper(substr($user->full_name ?? $user->name ?? $user->username ?? 'U', 0, 1));
+
+    $roleLabel = match ($user->role ?? '') {
+        'petugas' => 'Petugas Parkir',
+        'teknisi' => 'Teknisi Vendor',
+        'manajer' => 'Manajer Operasional',
+        'admin' => 'Admin Operasional',
+        default => 'Pengguna Operasional',
+    };
+
+    $statusBadgeClass = match ($user->status ?? '') {
+        'Aktif' => 'bg-success',
+        'Tidak Aktif' => 'bg-secondary',
+        default => 'bg-secondary',
+    };
+
+    $locationLabel = $user->operational_location_label ?? null;
+
+    if (empty($locationLabel) && !empty($user->parkingLocation)) {
+        $locationLabel = $user->parkingLocation->location_name ?? '-';
+
+        if (!empty($user->parkingLocation->location_code)) {
+            $locationLabel .= ' (' . $user->parkingLocation->location_code . ')';
+        }
     }
 
-    .form-page-title {
+    $locationLabel = $locationLabel ?: 'Belum ditentukan';
+@endphp
+
+<style>
+    .page-title-local {
         color: #071b4d;
-        font-size: 27px;
+        font-size: 26px;
         font-weight: 950;
-        letter-spacing: -0.4px;
+        letter-spacing: -0.35px;
         margin-bottom: 6px;
     }
 
-    .form-page-subtitle {
+    .page-subtitle-local {
         color: #5f719a;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 650;
+        line-height: 1.55;
         margin-bottom: 0;
     }
 
@@ -27,59 +57,138 @@
         width: 58px;
         height: 58px;
         border-radius: 18px;
-        background: linear-gradient(145deg, #1f6de2, #0649bd);
+        background: linear-gradient(145deg, #ffc107, #ef9f00);
         color: #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 27px;
-        box-shadow: 0 14px 28px rgba(13, 110, 253, 0.22);
+        box-shadow: 0 14px 28px rgba(255, 193, 7, 0.26);
         flex-shrink: 0;
     }
 
-    .section-title {
+    .section-title-local {
         color: #071b4d;
         font-size: 18px;
         font-weight: 950;
         margin-bottom: 4px;
     }
 
-    .section-subtitle {
+    .section-subtitle-local {
         color: #7b8caf;
         font-size: 13px;
-        font-weight: 600;
+        font-weight: 650;
+        line-height: 1.5;
         margin-bottom: 0;
     }
 
-    .form-label {
-        color: #071b4d;
-        font-size: 14px;
-        font-weight: 850;
-        margin-bottom: 8px;
-    }
-
-    .form-control,
-    .form-select {
-        min-height: 48px;
-        border-radius: 13px;
+    .btn-soft {
         border: 1px solid #d7e3f7;
-        background-color: #f8fbff;
+        background: #ffffff;
         color: #071b4d;
-        font-weight: 650;
+        font-weight: 850;
     }
 
-    .form-control:focus,
-    .form-select:focus {
-        background-color: #ffffff;
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
+    .btn-soft:hover {
+        background: #f3f8ff;
+        border-color: #b9cbea;
+        color: #0649bd;
     }
 
-    .help-text {
+    .form-section-card {
+        border-radius: 20px;
+        border: 1px solid #d7e3f7;
+        background: #ffffff;
+        padding: 24px;
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.05);
+    }
+
+    .field-helper {
         color: #7b8caf;
         font-size: 12px;
-        font-weight: 600;
+        font-weight: 650;
         margin-top: 6px;
+        display: block;
+    }
+
+    .side-card {
+        border-radius: 20px;
+        border: 1px solid #d7e3f7;
+        background: #ffffff;
+        padding: 20px;
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.05);
+    }
+
+    .profile-mini-card {
+        border-radius: 18px;
+        border: 1px solid #b9cbea;
+        background:
+            radial-gradient(circle at top right, rgba(13, 110, 253, 0.12), transparent 36%),
+            linear-gradient(180deg, #f8fbff, #ffffff);
+        padding: 18px;
+    }
+
+    .profile-avatar {
+        width: 58px;
+        height: 58px;
+        border-radius: 18px;
+        background: linear-gradient(145deg, #0b3969, #07264c);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 23px;
+        font-weight: 950;
+        overflow: hidden;
+        flex-shrink: 0;
+        box-shadow: 0 12px 24px rgba(7, 38, 76, 0.20);
+    }
+
+    .profile-avatar img {
+        width: 58px;
+        height: 58px;
+        object-fit: cover;
+    }
+
+    .profile-label {
+        color: #7b8caf;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 4px;
+    }
+
+    .profile-value {
+        color: #071b4d;
+        font-size: 15px;
+        font-weight: 950;
+        margin-bottom: 3px;
+    }
+
+    .side-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 12px 0;
+        border-bottom: 1px solid #edf3fc;
+    }
+
+    .side-row:last-child {
+        border-bottom: none;
+    }
+
+    .side-label {
+        color: #7b8caf;
+        font-size: 13px;
+        font-weight: 750;
+    }
+
+    .side-value {
+        color: #071b4d;
+        font-size: 13px;
+        font-weight: 950;
+        text-align: right;
     }
 
     .info-box {
@@ -90,8 +199,8 @@
     }
 
     .info-box.warning {
-        background: #fff6dc;
         border-color: #ffe4a3;
+        background: #fff6dc;
         color: #946200;
     }
 
@@ -136,90 +245,36 @@
         color: #0bb4d8;
     }
 
-    .btn-primary {
-        background: linear-gradient(135deg, #1f6de2, #0649bd);
-        border: none;
-        font-weight: 850;
-        box-shadow: 0 12px 22px rgba(13, 110, 253, 0.20);
-    }
-
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #0d63dd, #003f9d);
-    }
-
-    .btn-soft {
+    .action-card {
+        border-radius: 20px;
         border: 1px solid #d7e3f7;
-        background: #ffffff;
-        color: #071b4d;
-        font-weight: 800;
+        background: linear-gradient(180deg, #ffffff, #f8fbff);
+        padding: 20px;
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.05);
     }
 
-    .btn-soft:hover {
-        background: #f3f8ff;
-        border-color: #b9cbea;
-    }
+    @media (max-width: 768px) {
+        .page-title-local {
+            font-size: 22px;
+        }
 
-    .profile-mini {
-        border-radius: 18px;
-        border: 1px solid #d7e3f7;
-        background: linear-gradient(180deg, #f8fbff, #ffffff);
-        padding: 18px;
-    }
-
-    .profile-avatar {
-        width: 58px;
-        height: 58px;
-        border-radius: 18px;
-        background: linear-gradient(145deg, #0b3969, #07264c);
-        color: #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 950;
-        font-size: 23px;
-        overflow: hidden;
-        box-shadow: 0 12px 24px rgba(7, 38, 76, 0.20);
-    }
-
-    .profile-avatar img {
-        width: 58px;
-        height: 58px;
-        object-fit: cover;
-    }
-
-    .badge-soft {
-        border-radius: 999px;
-        padding: 7px 11px;
-        font-size: 12px;
-        font-weight: 850;
-        background: #eaf3ff;
-        color: #0d6efd;
+        .form-section-card {
+            padding: 20px;
+        }
     }
 </style>
 
-@php
-    $selectedParkingLocationId = old('parking_location_id', $user->parking_location_id);
-    $initial = strtoupper(substr($user->full_name ?? $user->name ?? $user->username ?? 'U', 0, 1));
-
-    $roleLabel = match ($user->role) {
-        'petugas' => 'Petugas Parkir',
-        'teknisi' => 'Teknisi Vendor',
-        default => 'Pengguna Operasional',
-    };
-@endphp
-
-<div class="container-fluid">
-    {{-- Header --}}
-    <div class="form-page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
         <div class="d-flex align-items-center gap-3">
             <div class="header-icon">
                 <i class="bi bi-person-gear"></i>
             </div>
 
             <div>
-                <h3 class="form-page-title">Edit Akun Pengguna</h3>
-                <p class="form-page-subtitle">
-                    Perbarui data akun Petugas Parkir atau Teknisi Vendor.
+                <h3 class="page-title-local">Edit Akun Pengguna</h3>
+                <p class="page-subtitle-local">
+                    Perbarui data akun pengguna operasional. Password tidak berubah dari halaman ini.
                 </p>
             </div>
         </div>
@@ -237,19 +292,19 @@
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="page-card p-4">
-                <div class="mb-4">
-                    <h5 class="section-title">Form Edit Akun</h5>
-                    <p class="section-subtitle">
-                        Ubah data pengguna operasional. Password tidak berubah dari halaman ini.
-                    </p>
-                </div>
+    <form method="POST" action="{{ route('user-management.update', $user) }}">
+        @csrf
+        @method('PUT')
 
-                <form method="POST" action="{{ route('user-management.update', $user) }}">
-                    @csrf
-                    @method('PUT')
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="form-section-card">
+                    <div class="mb-4">
+                        <h5 class="section-title-local">Informasi Akun</h5>
+                        <p class="section-subtitle-local">
+                            Perbarui identitas akun, role, lokasi operasional, dan status pengguna.
+                        </p>
+                    </div>
 
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -262,17 +317,16 @@
                                 name="username"
                                 value="{{ old('username', $user->username) }}"
                                 class="form-control @error('username') is-invalid @enderror"
-                                placeholder="Contoh: 1005"
-                                autofocus
+                                required
                             >
 
                             @error('username')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
 
-                            <div class="help-text">
-                                NIK digunakan untuk login ke sistem.
-                            </div>
+                            <span class="field-helper">
+                                NIK digunakan sebagai username login pengguna.
+                            </span>
                         </div>
 
                         <div class="col-md-6">
@@ -285,12 +339,16 @@
                                 name="full_name"
                                 value="{{ old('full_name', $user->full_name ?? $user->name) }}"
                                 class="form-control @error('full_name') is-invalid @enderror"
-                                placeholder="Masukkan nama lengkap"
+                                required
                             >
 
                             @error('full_name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+
+                            <span class="field-helper">
+                                Nama akan tampil pada dashboard dan riwayat aktivitas.
+                            </span>
                         </div>
 
                         <div class="col-md-6">
@@ -308,9 +366,9 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
 
-                            <div class="help-text">
-                                Boleh dikosongkan jika belum ada.
-                            </div>
+                            <span class="field-helper">
+                                Boleh dikosongkan jika pengguna belum memiliki email.
+                            </span>
                         </div>
 
                         <div class="col-md-6">
@@ -327,6 +385,10 @@
                             @error('phone')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+
+                            <span class="field-helper">
+                                Digunakan untuk kebutuhan koordinasi operasional.
+                            </span>
                         </div>
 
                         <div class="col-md-6">
@@ -334,7 +396,11 @@
                                 Role <span class="text-danger">*</span>
                             </label>
 
-                            <select name="role" class="form-select @error('role') is-invalid @enderror">
+                            <select
+                                name="role"
+                                class="form-select @error('role') is-invalid @enderror"
+                                required
+                            >
                                 <option value="">Pilih Role</option>
                                 <option value="petugas" {{ old('role', $user->role) === 'petugas' ? 'selected' : '' }}>
                                     Petugas Parkir
@@ -348,9 +414,9 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
 
-                            <div class="help-text">
-                                Admin Operasional hanya mengelola akun Petugas/Teknisi.
-                            </div>
+                            <span class="field-helper">
+                                Admin Operasional hanya mengelola akun Petugas Parkir dan Teknisi Vendor.
+                            </span>
                         </div>
 
                         <div class="col-md-6">
@@ -361,6 +427,7 @@
                             <select
                                 name="parking_location_id"
                                 class="form-select @error('parking_location_id') is-invalid @enderror"
+                                required
                             >
                                 <option value="">Pilih Lokasi Operasional</option>
 
@@ -370,8 +437,8 @@
                                         {{ (string) $selectedParkingLocationId === (string) $location->id ? 'selected' : '' }}
                                     >
                                         {{ $location->location_name }}
-                                        @if (!empty($location->area_zone))
-                                            - {{ $location->area_zone }}
+                                        @if (!empty($location->location_code))
+                                            ({{ $location->location_code }})
                                         @endif
                                     </option>
                                 @endforeach
@@ -381,9 +448,9 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
 
-                            <div class="help-text">
-                                Pengguna di lokasi operasional yang sama akan melihat history yang sama.
-                            </div>
+                            <span class="field-helper">
+                                Akses history Petugas mengikuti lokasi operasional ini.
+                            </span>
                         </div>
 
                         <div class="col-md-6">
@@ -391,7 +458,11 @@
                                 Status <span class="text-danger">*</span>
                             </label>
 
-                            <select name="status" class="form-select @error('status') is-invalid @enderror">
+                            <select
+                                name="status"
+                                class="form-select @error('status') is-invalid @enderror"
+                                required
+                            >
                                 <option value="Aktif" {{ old('status', $user->status) === 'Aktif' ? 'selected' : '' }}>
                                     Aktif
                                 </option>
@@ -403,129 +474,179 @@
                             @error('status')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+
+                            <span class="field-helper">
+                                Akun aktif dapat login ke sistem.
+                            </span>
                         </div>
 
                         <div class="col-md-6">
                             <div class="info-box h-100">
                                 <div class="fw-bold text-primary mb-1">
                                     <i class="bi bi-geo-alt-fill me-1"></i>
-                                    Basis History
+                                    Lokasi Saat Ini
                                 </div>
-                                <div class="text-muted small">
-                                    History laporan, traffic, dan backup mengikuti lokasi operasional pengguna.
+
+                                <div class="text-muted small fw-semibold">
+                                    {{ $locationLabel }}
                                 </div>
                             </div>
                         </div>
 
                         <div class="col-12">
-                            <div class="info-box warning mb-0">
+                            <div class="info-box warning">
                                 <div class="fw-bold mb-1">
                                     <i class="bi bi-key-fill me-1"></i>
-                                    Informasi Password
+                                    Password Tidak Diubah
                                 </div>
+
                                 Perubahan data akun tidak mengubah password. Gunakan tombol reset password pada halaman detail akun jika diperlukan.
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="d-flex justify-content-end flex-wrap gap-2 mt-4">
-                        <a href="{{ route('user-management.show', $user) }}" class="btn btn-soft rounded-3 px-4">
-                            Batal
-                        </a>
+                <div class="action-card mt-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <h6 class="fw-bold mb-1">Simpan Perubahan Akun</h6>
+                            <p class="text-muted small mb-0">
+                                Pastikan NIK, role, lokasi operasional, dan status akun sudah benar.
+                            </p>
+                        </div>
 
-                        <button type="submit" class="btn btn-primary rounded-3 px-4">
-                            <i class="bi bi-save me-1"></i>
-                            Simpan Perubahan
-                        </button>
+                        <div class="d-flex gap-2">
+                            <a href="{{ route('user-management.show', $user) }}" class="btn btn-soft rounded-3 px-4">
+                                Batal
+                            </a>
+
+                            <button type="submit" class="btn btn-primary rounded-3 px-4">
+                                <i class="bi bi-save me-1"></i>
+                                Simpan Perubahan
+                            </button>
+                        </div>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
 
-        <div class="col-lg-4">
-            <div class="page-card p-4">
-                <h5 class="section-title mb-3">Ringkasan Akun</h5>
+            <div class="col-lg-4">
+                <div class="side-card sticky-top" style="top: 120px;">
+                    <div class="profile-mini-card mb-4">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="profile-avatar">
+                                @if (!empty($user->profile_photo))
+                                    <img src="{{ asset('storage/' . $user->profile_photo) }}" alt="Foto Profil">
+                                @else
+                                    {{ $initial }}
+                                @endif
+                            </div>
 
-                <div class="profile-mini mb-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="profile-avatar">
-                            @if (!empty($user->profile_photo))
-                                <img src="{{ asset('storage/' . $user->profile_photo) }}" alt="Foto Profil">
-                            @else
-                                {{ $initial }}
-                            @endif
+                            <div>
+                                <div class="profile-label">Akun Pengguna</div>
+                                <div class="profile-value">
+                                    {{ $user->full_name ?? $user->name ?? '-' }}
+                                </div>
+
+                                <div class="text-muted small fw-semibold">
+                                    NIK: {{ $user->username ?? '-' }}
+                                </div>
+
+                                <div class="d-flex flex-wrap gap-2 mt-2">
+                                    <span class="badge rounded-pill bg-primary">
+                                        {{ $roleLabel }}
+                                    </span>
+
+                                    <span class="badge rounded-pill {{ $statusBadgeClass }}">
+                                        {{ $user->status ?? '-' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="section-title-local">Ringkasan Akun</h5>
+                    <p class="section-subtitle-local mb-3">
+                        Informasi akun sebelum perubahan disimpan.
+                    </p>
+
+                    <div class="side-row">
+                        <div class="side-label">NIK</div>
+                        <div class="side-value">{{ $user->username ?? '-' }}</div>
+                    </div>
+
+                    <div class="side-row">
+                        <div class="side-label">Role</div>
+                        <div class="side-value">{{ $roleLabel }}</div>
+                    </div>
+
+                    <div class="side-row">
+                        <div class="side-label">Lokasi</div>
+                        <div class="side-value">{{ $locationLabel }}</div>
+                    </div>
+
+                    <div class="side-row">
+                        <div class="side-label">Status</div>
+                        <div class="side-value">
+                            <span class="badge rounded-pill {{ $statusBadgeClass }}">
+                                {{ $user->status ?? '-' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="side-row">
+                        <div class="side-label">Dibuat</div>
+                        <div class="side-value">
+                            {{ $user->created_at?->format('d M Y H:i') ?? '-' }} WIB
+                        </div>
+                    </div>
+
+                    <div class="side-row">
+                        <div class="side-label">Diperbarui</div>
+                        <div class="side-value">
+                            {{ $user->updated_at?->format('d M Y H:i') ?? '-' }} WIB
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h5 class="section-title-local">Catatan Role</h5>
+                    <p class="section-subtitle-local mb-4">
+                        Pastikan role sesuai tanggung jawab pengguna.
+                    </p>
+
+                    <div class="note-item">
+                        <div class="note-icon primary">
+                            <i class="bi bi-person-badge"></i>
                         </div>
 
                         <div>
-                            <div class="fw-bold text-dark">
-                                {{ $user->full_name ?? $user->name ?? '-' }}
-                            </div>
-                            <div class="text-muted small">
-                                NIK: {{ $user->username ?? '-' }}
-                            </div>
-                            <div class="mt-2">
-                                <span class="badge-soft">{{ $roleLabel }}</span>
+                            <div class="fw-bold text-dark">Petugas Parkir</div>
+                            <div class="text-muted small fw-semibold">
+                                Membuat laporan kendala, traffic harian, dan permintaan backup barang.
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="note-item">
-                    <div class="note-icon primary">
-                        <i class="bi bi-person-badge"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold text-dark">Login Menggunakan NIK</div>
-                        <div class="text-muted small">
-                            Kolom NIK tetap dipakai sebagai username di database.
+                    <div class="note-item">
+                        <div class="note-icon info">
+                            <i class="bi bi-tools"></i>
+                        </div>
+
+                        <div>
+                            <div class="fw-bold text-dark">Teknisi Vendor</div>
+                            <div class="text-muted small fw-semibold">
+                                Menangani laporan kendala yang ditugaskan oleh Manajer Operasional.
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="note-item">
-                    <div class="note-icon info">
-                        <i class="bi bi-geo-alt"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold text-dark">Lokasi Operasional</div>
-                        <div class="text-muted small">
-                            Lokasi dipakai untuk menyamakan history antar pengguna di cabang yang sama.
-                        </div>
+                    <div class="alert alert-warning rounded-4 mb-0">
+                        Jika akun tidak digunakan sementara, lebih aman ubah status menjadi
+                        <b>Tidak Aktif</b> daripada menghapus data.
                     </div>
                 </div>
-
-                <div class="note-item">
-                    <div class="note-icon success">
-                        <i class="bi bi-clock-history"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold text-dark">History Lokasi</div>
-                        <div class="text-muted small">
-                            Jika lokasi akun diganti, tampilan history akan mengikuti lokasi baru.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="note-item">
-                    <div class="note-icon warning">
-                        <i class="bi bi-shield-lock"></i>
-                    </div>
-                    <div>
-                        <div class="fw-bold text-dark">Status Akun</div>
-                        <div class="text-muted small">
-                            Akun Tidak Aktif tidak dapat digunakan untuk login.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="page-card p-4 mt-4">
-                <h5 class="section-title mb-2">Lokasi Saat Ini</h5>
-                <p class="text-muted small mb-0">
-                    {{ $user->operational_location_label ?? 'Belum ditentukan' }}
-                </p>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 @endsection

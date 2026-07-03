@@ -1,44 +1,34 @@
 @extends('layouts.app')
 
-@section('title', 'Pelaporan Traffic Harian | Sistem Penanganan Kendala Parkir')
+@section('title', 'Traffic Harian | Sistem Penanganan Kendala Parkir')
+@section('page_title', 'Traffic Harian')
+@section('page_subtitle', 'Pelaporan dan monitoring traffic operasional parkir')
 
 @section('content')
 @php
     $authUser = Auth::user();
+    $role = $authUser->role ?? '';
 
     $totalVehicleIn = $trafficReports->sum('total_vehicle_in');
     $totalVehicleOut = $trafficReports->sum('total_vehicle_out');
     $totalTransaction = $trafficReports->sum('total_transaction');
     $totalRevenue = $trafficReports->sum('total_revenue');
 
-    $operationalLocationLabel = 'Belum ditentukan';
+    $operationalLocationLabel = 'Seluruh Lokasi / Sesuai Akses';
 
     if ($authUser->parkingLocation) {
         $operationalLocationLabel = $authUser->parkingLocation->location_name ?? '-';
 
-        if (!empty($authUser->parkingLocation->area_zone)) {
-            $operationalLocationLabel .= ' - ' . $authUser->parkingLocation->area_zone;
+        if (!empty($authUser->parkingLocation->location_code)) {
+            $operationalLocationLabel .= ' (' . $authUser->parkingLocation->location_code . ')';
         }
     }
+
+    $searchValue = $search ?? request('search');
 @endphp
 
 <style>
-    .traffic-page-title {
-        color: #071b4d;
-        font-size: 27px;
-        font-weight: 950;
-        letter-spacing: -0.4px;
-        margin-bottom: 6px;
-    }
-
-    .traffic-page-subtitle {
-        color: #5f719a;
-        font-size: 14px;
-        font-weight: 600;
-        margin-bottom: 0;
-    }
-
-    .header-icon {
+    .traffic-header-icon {
         width: 58px;
         height: 58px;
         border-radius: 18px;
@@ -52,6 +42,22 @@
         flex-shrink: 0;
     }
 
+    .traffic-title {
+        color: #071b4d;
+        font-size: 26px;
+        font-weight: 950;
+        letter-spacing: -0.35px;
+        margin-bottom: 6px;
+    }
+
+    .traffic-subtitle {
+        color: #5f719a;
+        font-size: 14px;
+        font-weight: 650;
+        margin-bottom: 0;
+        line-height: 1.55;
+    }
+
     .summary-card {
         border-radius: 20px;
         border: 1px solid #d7e3f7;
@@ -59,12 +65,18 @@
         padding: 20px;
         height: 100%;
         box-shadow: 0 14px 34px rgba(15, 23, 42, 0.05);
+        transition: all 0.18s ease;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-2px);
+        border-color: #b9cbea;
     }
 
     .summary-label {
         color: #7b8caf;
         font-size: 13px;
-        font-weight: 800;
+        font-weight: 850;
         margin-bottom: 6px;
     }
 
@@ -73,6 +85,14 @@
         font-size: 28px;
         font-weight: 950;
         margin-bottom: 0;
+        line-height: 1.1;
+    }
+
+    .summary-help {
+        color: #7b8caf;
+        font-size: 12px;
+        font-weight: 650;
+        margin-top: 6px;
     }
 
     .summary-icon {
@@ -86,84 +106,10 @@
         flex-shrink: 0;
     }
 
-    .summary-icon.primary {
-        background: #eaf3ff;
-        color: #0d6efd;
-    }
-
-    .summary-icon.success {
-        background: #e7f7ee;
-        color: #198754;
-    }
-
-    .summary-icon.warning {
-        background: #fff6dc;
-        color: #d99a00;
-    }
-
-    .summary-icon.info {
-        background: #e5f8ff;
-        color: #0bb4d8;
-    }
-
-    .section-title {
-        color: #071b4d;
-        font-size: 18px;
-        font-weight: 950;
-        margin-bottom: 4px;
-    }
-
-    .section-subtitle {
-        color: #7b8caf;
-        font-size: 13px;
-        font-weight: 600;
-        margin-bottom: 0;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #1f6de2, #0649bd);
-        border: none;
-        font-weight: 850;
-        box-shadow: 0 12px 22px rgba(13, 110, 253, 0.20);
-    }
-
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #0d63dd, #003f9d);
-    }
-
-    .btn-soft {
-        border: 1px solid #d7e3f7;
-        background: #ffffff;
-        color: #071b4d;
-        font-weight: 800;
-    }
-
-    .btn-soft:hover {
-        background: #f3f8ff;
-        border-color: #b9cbea;
-    }
-
-    .form-label {
-        color: #071b4d;
-        font-size: 14px;
-        font-weight: 850;
-        margin-bottom: 8px;
-    }
-
-    .form-control {
-        min-height: 48px;
-        border-radius: 13px;
-        border: 1px solid #d7e3f7;
-        background-color: #f8fbff;
-        color: #071b4d;
-        font-weight: 650;
-    }
-
-    .form-control:focus {
-        background-color: #ffffff;
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
-    }
+    .summary-icon.primary { background: #eaf3ff; color: #0d6efd; }
+    .summary-icon.success { background: #e7f7ee; color: #198754; }
+    .summary-icon.warning { background: #fff6dc; color: #d99a00; }
+    .summary-icon.info { background: #e5f8ff; color: #0bb4d8; }
 
     .location-info-card {
         border-radius: 20px;
@@ -191,7 +137,7 @@
     .location-label {
         color: #7b8caf;
         font-size: 12px;
-        font-weight: 850;
+        font-weight: 900;
         text-transform: uppercase;
         letter-spacing: 0.04em;
         margin-bottom: 4px;
@@ -204,36 +150,74 @@
         margin-bottom: 3px;
     }
 
-    .table thead th {
-        color: #5f719a;
+    .section-title-local {
+        color: #071b4d;
+        font-size: 18px;
+        font-weight: 950;
+        margin-bottom: 4px;
+    }
+
+    .section-subtitle-local {
+        color: #7b8caf;
+        font-size: 13px;
+        font-weight: 650;
+        margin-bottom: 0;
+        line-height: 1.5;
+    }
+
+    .btn-soft {
+        border: 1px solid #d7e3f7;
+        background: #ffffff;
+        color: #071b4d;
+        font-weight: 850;
+    }
+
+    .btn-soft:hover {
+        background: #f3f8ff;
+        border-color: #b9cbea;
+        color: #0649bd;
+    }
+
+    .traffic-table thead th {
+        color: #071b4d;
         font-size: 12px;
-        font-weight: 900;
+        font-weight: 950;
         text-transform: uppercase;
         letter-spacing: 0.04em;
+        background: #f4f8ff;
         border-bottom: 1px solid #d7e3f7;
         white-space: nowrap;
     }
 
-    .table tbody td {
+    .traffic-table tbody td {
         color: #071b4d;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 650;
         border-bottom: 1px solid #edf3fc;
         vertical-align: middle;
     }
 
-    .table tbody tr:hover {
+    .traffic-table tbody tr:hover {
         background: #f8fbff;
     }
 
     .muted-small {
         color: #7b8caf;
         font-size: 12px;
-        font-weight: 600;
+        font-weight: 650;
+    }
+
+    .table-title-link {
+        color: #0d6efd;
+        font-weight: 950;
+    }
+
+    .table-title-link:hover {
+        color: #0649bd;
     }
 
     .empty-state {
-        padding: 58px 16px;
+        padding: 56px 16px;
         text-align: center;
         color: #7b8caf;
     }
@@ -253,34 +237,46 @@
 
     .role-alert {
         border-radius: 18px;
-        border: none;
+        border: 1px solid #b9cbea;
+        background: #f8fbff;
         padding: 18px;
+        color: #071b4d;
+    }
+
+    @media (max-width: 768px) {
+        .traffic-title {
+            font-size: 22px;
+        }
+
+        .summary-value {
+            font-size: 24px;
+        }
     }
 </style>
 
-<div class="container-fluid">
-    {{-- Header --}}
+<div class="container-fluid px-0">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
         <div class="d-flex align-items-center gap-3">
-            <div class="header-icon">
-                <i class="bi bi-car-front"></i>
+            <div class="traffic-header-icon">
+                <i class="bi bi-bar-chart-line"></i>
             </div>
 
             <div>
-                <h3 class="traffic-page-title">Pelaporan Traffic Harian</h3>
-                <p class="traffic-page-subtitle">
-                    History traffic harian pada lokasi operasional yang sama.
+                <h3 class="traffic-title">Traffic Harian</h3>
+                <p class="traffic-subtitle">
+                    Kelola data kendaraan masuk, kendaraan keluar, transaksi, dan pendapatan operasional parkir.
                 </p>
             </div>
         </div>
 
-        <a href="{{ route('traffic-reports.create') }}" class="btn btn-primary rounded-3 px-3">
-            <i class="bi bi-plus-circle me-1"></i>
-            Input Traffic Harian
-        </a>
+        @if ($role === 'petugas')
+            <a href="{{ route('traffic-reports.create') }}" class="btn btn-primary rounded-3 px-3">
+                <i class="bi bi-plus-circle me-1"></i>
+                Input Traffic Harian
+            </a>
+        @endif
     </div>
 
-    {{-- Info Lokasi --}}
     <div class="location-info-card mb-4">
         <div class="d-flex align-items-start gap-3">
             <div class="location-icon">
@@ -288,23 +284,24 @@
             </div>
 
             <div>
-                <div class="location-label">History Lokasi Operasional</div>
+                <div class="location-label">Lokasi Operasional</div>
                 <div class="location-value">{{ $operationalLocationLabel }}</div>
-                <div class="text-muted small">
-                    Daftar di bawah ini menampilkan traffic harian dari semua Petugas yang berada di lokasi operasional yang sama.
+                <div class="text-muted small fw-semibold">
+                    Petugas dapat melihat history traffic pada lokasi operasional yang sama.
+                    Edit dan hapus hanya dapat dilakukan oleh pembuat data.
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- Info Ringkas --}}
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
+        <div class="col-xl-3 col-md-6">
             <div class="summary-card">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-start gap-3">
                     <div>
                         <div class="summary-label">Total Data</div>
                         <h4 class="summary-value">{{ number_format($trafficReports->total()) }}</h4>
+                        <div class="summary-help">Seluruh laporan traffic</div>
                     </div>
 
                     <div class="summary-icon primary">
@@ -314,13 +311,13 @@
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-xl-3 col-md-6">
             <div class="summary-card">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-start gap-3">
                     <div>
                         <div class="summary-label">Kendaraan Masuk</div>
                         <h4 class="summary-value">{{ number_format($totalVehicleIn) }}</h4>
-                        <div class="muted-small mt-1">Berdasarkan halaman ini</div>
+                        <div class="summary-help">Berdasarkan halaman ini</div>
                     </div>
 
                     <div class="summary-icon success">
@@ -330,13 +327,13 @@
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-xl-3 col-md-6">
             <div class="summary-card">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-start gap-3">
                     <div>
                         <div class="summary-label">Total Transaksi</div>
                         <h4 class="summary-value">{{ number_format($totalTransaction) }}</h4>
-                        <div class="muted-small mt-1">Berdasarkan halaman ini</div>
+                        <div class="summary-help">Jumlah transaksi tercatat</div>
                     </div>
 
                     <div class="summary-icon warning">
@@ -346,15 +343,15 @@
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-xl-3 col-md-6">
             <div class="summary-card">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-start gap-3">
                     <div>
                         <div class="summary-label">Total Pendapatan</div>
                         <h5 class="fw-bold mb-0 text-success">
                             Rp {{ number_format($totalRevenue, 0, ',', '.') }}
                         </h5>
-                        <div class="muted-small mt-1">Berdasarkan halaman ini</div>
+                        <div class="summary-help">Berdasarkan halaman ini</div>
                     </div>
 
                     <div class="summary-icon info">
@@ -365,30 +362,30 @@
         </div>
     </div>
 
-    {{-- Alert Alur --}}
-    <div class="alert alert-primary role-alert mb-4">
+    <div class="role-alert mb-4">
         <div class="fw-bold mb-1">
-            <i class="bi bi-info-circle-fill me-1"></i>
+            <i class="bi bi-info-circle-fill me-1 text-primary"></i>
             Alur Traffic Harian
         </div>
-        Petugas dapat melihat history traffic berdasarkan <b>lokasi operasional yang sama</b>.
-        Namun edit dan hapus hanya dapat dilakukan oleh akun pembuat laporan traffic.
+        <div class="small fw-semibold text-muted">
+            Data traffic digunakan untuk membantu Manajer Operasional dalam membaca kondisi kendaraan,
+            transaksi, dan pendapatan parkir harian. Pastikan data yang diinput sesuai kondisi operasional.
+        </div>
     </div>
 
-    {{-- Filter --}}
     <div class="page-card p-4 mb-4">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
             <div>
-                <h5 class="section-title">Filter Traffic Harian</h5>
-                <p class="section-subtitle">
-                    Cari laporan berdasarkan tanggal, shift, lokasi, atau pembuat laporan.
+                <h5 class="section-title-local">Filter Traffic Harian</h5>
+                <p class="section-subtitle-local">
+                    Cari berdasarkan tanggal, shift, lokasi, kode lokasi, atau nama pembuat laporan.
                 </p>
             </div>
 
-            @if (!empty($search))
+            @if (!empty($searchValue))
                 <a href="{{ route('traffic-reports.index') }}" class="btn btn-soft rounded-3">
                     <i class="bi bi-arrow-clockwise me-1"></i>
-                    Reset Filter
+                    Reset
                 </a>
             @endif
         </div>
@@ -399,9 +396,9 @@
                 <input
                     type="text"
                     name="search"
-                    value="{{ $search }}"
+                    value="{{ $searchValue }}"
                     class="form-control"
-                    placeholder="Cari tanggal, shift, lokasi, atau pembuat laporan..."
+                    placeholder="Contoh: 03 Jul 2026, Shift Pagi, Living Plaza, Petugas..."
                 >
             </div>
 
@@ -415,17 +412,16 @@
         </form>
     </div>
 
-    {{-- Tabel --}}
     <div class="page-card p-4">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
             <div>
-                <h5 class="section-title">Daftar Traffic Harian</h5>
-                <p class="section-subtitle">
-                    Menampilkan history traffic harian pada lokasi operasional yang sama.
+                <h5 class="section-title-local">Daftar Traffic Harian</h5>
+                <p class="section-subtitle-local">
+                    Menampilkan data traffic harian sesuai hak akses pengguna.
                 </p>
             </div>
 
-            <div class="text-muted small">
+            <div class="text-muted small fw-semibold">
                 Menampilkan
                 <b>{{ $trafficReports->firstItem() ?? 0 }}</b>
                 sampai
@@ -437,13 +433,13 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table align-middle">
+            <table class="table traffic-table align-middle">
                 <thead>
                     <tr>
                         <th style="width: 60px;">No</th>
                         <th>Tanggal</th>
                         <th>Pembuat</th>
-                        <th>Lokasi Operasional</th>
+                        <th>Lokasi</th>
                         <th>Shift</th>
                         <th class="text-end">Masuk</th>
                         <th class="text-end">Keluar</th>
@@ -457,21 +453,14 @@
                     @forelse ($trafficReports as $report)
                         @php
                             $locationLabel = $report->parkingLocation->location_name ?? '-';
-
-                            if (!empty($report->parkingLocation->area_zone)) {
-                                $locationLabel .= ' - ' . $report->parkingLocation->area_zone;
-                            }
-
-                            $reporterName = $report->user->full_name
-                                ?? $report->user->name
-                                ?? '-';
-
-                            $isOwner = $report->user_id === $authUser->id;
+                            $locationCode = $report->parkingLocation->location_code ?? '-';
+                            $reporterName = $report->user->full_name ?? $report->user->name ?? '-';
+                            $isOwner = (int) $report->user_id === (int) $authUser->id;
                         @endphp
 
                         <tr>
                             <td class="text-muted">
-                                {{ $trafficReports->firstItem() + $loop->index }}
+                                {{ ($trafficReports->firstItem() ?? 1) + $loop->index }}
                             </td>
 
                             <td>
@@ -479,36 +468,24 @@
                                     {{ $report->report_date?->format('d M Y') ?? '-' }}
                                 </div>
                                 <div class="muted-small">
-                                    ID: {{ $report->id }}
+                                    Dibuat: {{ $report->created_at?->format('d M Y H:i') ?? '-' }} WIB
                                 </div>
                             </td>
 
                             <td>
-                                <div class="fw-bold">
-                                    {{ $reporterName }}
-                                </div>
-                                <div class="muted-small">
-                                    NIK: {{ $report->user->username ?? '-' }}
-                                </div>
+                                <div class="fw-bold">{{ $reporterName }}</div>
+                                <div class="muted-small">NIK: {{ $report->user->username ?? '-' }}</div>
 
                                 @if ($isOwner)
-                                    <span class="badge rounded-pill bg-primary mt-1">
-                                        Laporan Anda
-                                    </span>
+                                    <span class="badge rounded-pill bg-primary mt-1">Laporan Anda</span>
                                 @else
-                                    <span class="badge rounded-pill bg-info text-dark mt-1">
-                                        History Lokasi
-                                    </span>
+                                    <span class="badge rounded-pill bg-info text-dark mt-1">History Lokasi</span>
                                 @endif
                             </td>
 
                             <td>
-                                <div class="fw-bold">
-                                    {{ $locationLabel }}
-                                </div>
-                                <div class="muted-small">
-                                    Kode: {{ $report->parkingLocation->location_code ?? '-' }}
-                                </div>
+                                <div class="fw-bold">{{ $locationLabel }}</div>
+                                <div class="muted-small">Kode: {{ $locationCode }}</div>
                             </td>
 
                             <td>
@@ -518,23 +495,17 @@
                             </td>
 
                             <td class="text-end">
-                                <div class="fw-bold">
-                                    {{ number_format($report->total_vehicle_in ?? 0) }}
-                                </div>
+                                <div class="fw-bold">{{ number_format($report->total_vehicle_in ?? 0) }}</div>
                                 <div class="muted-small">kendaraan</div>
                             </td>
 
                             <td class="text-end">
-                                <div class="fw-bold">
-                                    {{ number_format($report->total_vehicle_out ?? 0) }}
-                                </div>
+                                <div class="fw-bold">{{ number_format($report->total_vehicle_out ?? 0) }}</div>
                                 <div class="muted-small">kendaraan</div>
                             </td>
 
                             <td class="text-end">
-                                <div class="fw-bold">
-                                    {{ number_format($report->total_transaction ?? 0) }}
-                                </div>
+                                <div class="fw-bold">{{ number_format($report->total_transaction ?? 0) }}</div>
                                 <div class="muted-small">transaksi</div>
                             </td>
 
@@ -565,19 +536,13 @@
                                             @csrf
                                             @method('DELETE')
 
-                                            <button class="btn btn-sm btn-danger rounded-3">
+                                            <button type="submit" class="btn btn-sm btn-danger rounded-3">
                                                 <i class="bi bi-trash me-1"></i>
                                                 Hapus
                                             </button>
                                         </form>
                                     @endif
                                 </div>
-
-                                @if (!$isOwner)
-                                    <div class="muted-small mt-1">
-                                        History lokasi
-                                    </div>
-                                @endif
                             </td>
                         </tr>
                     @empty
@@ -589,15 +554,16 @@
                                     </div>
 
                                     <h6 class="fw-bold mb-1 text-dark">Belum ada laporan traffic harian</h6>
-
                                     <p class="mb-3">
-                                        Belum ada laporan traffic harian pada lokasi operasional Anda.
+                                        Belum ada data traffic harian yang tercatat pada akses lokasi ini.
                                     </p>
 
-                                    <a href="{{ route('traffic-reports.create') }}" class="btn btn-primary rounded-3">
-                                        <i class="bi bi-plus-circle me-1"></i>
-                                        Input Traffic Pertama
-                                    </a>
+                                    @if ($role === 'petugas')
+                                        <a href="{{ route('traffic-reports.create') }}" class="btn btn-primary rounded-3">
+                                            <i class="bi bi-plus-circle me-1"></i>
+                                            Input Traffic Pertama
+                                        </a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

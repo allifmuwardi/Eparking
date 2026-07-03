@@ -1,10 +1,12 @@
 @extends('layouts.app')
 
 @section('title', 'Dashboard | Sistem Penanganan Kendala Parkir')
+@section('page_title', 'Dashboard')
+@section('page_subtitle', 'Ringkasan aktivitas operasional parkir')
 
 @section('content')
 @php
-    $roleLabel = match ($role) {
+    $roleLabel = match ($role ?? '') {
         'petugas' => 'Petugas Parkir',
         'teknisi' => 'Teknisi Vendor',
         'manajer' => 'Manajer Operasional',
@@ -21,72 +23,147 @@
             'Ditolak' => 'bg-danger',
             'Ditutup / Diarsipkan' => 'bg-dark',
             'Disetujui' => 'bg-success',
+            'Diproses' => 'bg-info text-dark',
             'Selesai' => 'bg-primary',
+            'Dibatalkan' => 'bg-danger',
             default => 'bg-secondary',
         };
     };
+
+    $displayName = $user->full_name ?? $user->name ?? 'Pengguna';
+    $locationName = $user->parkingLocation->location_name ?? null;
 @endphp
 
 <style>
-    .dashboard-header {
+    .dashboard-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 24px;
+        padding: 28px;
+        background:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.35), transparent 34%),
+            linear-gradient(135deg, #0b3969 0%, #0649bd 55%, #0d6efd 100%);
+        color: #ffffff;
+        box-shadow: 0 22px 50px rgba(13, 110, 253, 0.22);
         margin-bottom: 24px;
     }
 
-    .dashboard-title {
-        color: #071b4d;
-        font-size: 28px;
-        font-weight: 950;
-        letter-spacing: -0.5px;
-        margin-bottom: 6px;
+    .dashboard-hero::after {
+        content: "";
+        position: absolute;
+        width: 230px;
+        height: 230px;
+        right: -74px;
+        bottom: -92px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
     }
 
-    .dashboard-subtitle {
-        color: #5f719a;
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.16);
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 12px;
+        font-weight: 850;
+        margin-bottom: 14px;
+    }
+
+    .hero-title {
+        font-size: 30px;
+        font-weight: 950;
+        letter-spacing: -0.5px;
+        margin-bottom: 7px;
+    }
+
+    .hero-subtitle {
+        max-width: 760px;
+        color: rgba(255, 255, 255, 0.82);
         font-size: 14px;
         font-weight: 600;
         margin-bottom: 0;
+        line-height: 1.65;
     }
 
-    .dashboard-subtitle .role-text {
-        color: #0d6efd;
+    .hero-mini-card {
+        border-radius: 18px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.20);
+        backdrop-filter: blur(12px);
+    }
+
+    .hero-mini-label {
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .hero-mini-value {
+        color: #ffffff;
+        font-size: 14px;
         font-weight: 900;
+        margin-bottom: 0;
     }
 
     .stat-card {
         position: relative;
+        min-height: 138px;
         overflow: hidden;
-        min-height: 124px;
         transition: all 0.18s ease;
     }
 
     .stat-card:hover {
-        transform: translateY(-2px);
+        transform: translateY(-3px);
+        border-color: #b9cbea;
+    }
+
+    .stat-card::after {
+        content: "";
+        position: absolute;
+        width: 92px;
+        height: 92px;
+        right: -34px;
+        bottom: -34px;
+        border-radius: 999px;
+        background: rgba(13, 110, 253, 0.07);
     }
 
     .stat-label {
         color: #5f719a;
         font-size: 13px;
-        font-weight: 750;
-        margin-bottom: 6px;
+        font-weight: 800;
+        margin-bottom: 8px;
     }
 
     .stat-value {
-        font-size: 30px;
+        font-size: 33px;
         line-height: 1;
         font-weight: 950;
-        margin-bottom: 8px;
+        margin-bottom: 9px;
+        letter-spacing: -0.5px;
     }
 
     .stat-desc {
         color: #7b8caf;
         font-size: 12px;
-        font-weight: 600;
+        font-weight: 650;
+        line-height: 1.45;
     }
 
     .stat-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 16px;
+        width: 52px;
+        height: 52px;
+        border-radius: 17px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -126,29 +203,31 @@
 
     .quick-action {
         display: block;
-        height: 100%;
         color: inherit;
+        height: 100%;
     }
 
     .quick-action-card {
-        min-height: 100px;
+        min-height: 116px;
         transition: all 0.18s ease;
+        overflow: hidden;
+        position: relative;
     }
 
     .quick-action-card:hover {
-        transform: translateY(-2px);
+        transform: translateY(-3px);
         border-color: #b9cbea;
     }
 
     .quick-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 17px;
+        width: 58px;
+        height: 58px;
+        border-radius: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #ffffff;
-        font-size: 27px;
+        font-size: 28px;
         flex-shrink: 0;
         box-shadow: 0 14px 26px rgba(13, 110, 253, 0.18);
     }
@@ -165,52 +244,59 @@
         background: linear-gradient(135deg, #ffc107, #ef9f00);
     }
 
+    .quick-title {
+        color: #071b4d;
+        font-size: 15px;
+        font-weight: 950;
+        margin-bottom: 5px;
+    }
+
+    .quick-desc {
+        color: #7b8caf;
+        font-size: 12px;
+        font-weight: 650;
+        margin-bottom: 0;
+        line-height: 1.5;
+    }
+
+    .dashboard-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
     .section-title {
         color: #071b4d;
         font-size: 18px;
         font-weight: 950;
         margin-bottom: 4px;
+        letter-spacing: -0.2px;
     }
 
     .section-subtitle {
         color: #7b8caf;
         font-size: 13px;
-        font-weight: 600;
+        font-weight: 650;
         margin-bottom: 0;
-    }
-
-    .table {
-        margin-bottom: 0;
-    }
-
-    .table thead th {
-        color: #071b4d;
-        font-size: 13px;
-        font-weight: 900;
-        border-bottom: 1px solid #d7e3f7;
-        padding-top: 14px;
-        padding-bottom: 14px;
-    }
-
-    .table tbody td {
-        color: #263b66;
-        font-size: 13px;
-        font-weight: 600;
-        border-bottom: 1px solid #edf2fb;
-        padding-top: 14px;
-        padding-bottom: 14px;
-    }
-
-    .table tbody tr:last-child td {
-        border-bottom: none;
+        line-height: 1.5;
     }
 
     .empty-state {
         color: #7b8caf;
         font-size: 13px;
         font-weight: 650;
-        padding: 34px 10px;
+        padding: 38px 10px;
         text-align: center;
+    }
+
+    .empty-state i {
+        display: block;
+        color: #b8c7de;
+        font-size: 34px;
+        margin-bottom: 10px;
     }
 
     .btn-soft-primary {
@@ -237,38 +323,118 @@
     .info-panel-label {
         color: #5f719a;
         font-size: 13px;
-        font-weight: 750;
-        margin-bottom: 6px;
+        font-weight: 800;
+        margin-bottom: 7px;
     }
 
     .info-panel-value {
         color: #071b4d;
-        font-size: 26px;
+        font-size: 27px;
         font-weight: 950;
         margin-bottom: 0;
     }
+
+    .table-link-title {
+        font-weight: 900;
+        color: #0d6efd;
+    }
+
+    .table-link-title:hover {
+        color: #0649bd;
+    }
+
+    .table-subtext {
+        color: #7b8caf;
+        font-size: 12px;
+        font-weight: 650;
+        margin-top: 3px;
+    }
+
+    .chart-wrap {
+        min-height: 260px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-hero {
+            padding: 22px;
+        }
+
+        .hero-title {
+            font-size: 23px;
+        }
+
+        .hero-subtitle {
+            font-size: 13px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+        }
+    }
 </style>
 
-<div class="container-fluid">
-    {{-- Header --}}
-    <div class="dashboard-header">
-        <h3 class="dashboard-title">Dashboard</h3>
-        <p class="dashboard-subtitle">
-            Selamat datang, <span class="fw-bold">{{ $user->full_name ?? $user->name }}</span>.
-            Anda login sebagai <span class="role-text">{{ $roleLabel }}</span>.
-        </p>
+<div class="container-fluid px-0">
+    <div class="dashboard-hero">
+        <div class="hero-content">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-8">
+                    <div class="hero-kicker">
+                        <i class="bi bi-p-square-fill"></i>
+                        Sistem Penanganan Kendala Parkir
+                    </div>
+
+                    <h3 class="hero-title">
+                        Selamat datang, {{ $displayName }}
+                    </h3>
+
+                    <p class="hero-subtitle">
+                        Anda login sebagai <strong>{{ $roleLabel }}</strong>.
+                        Gunakan dashboard ini untuk memantau aktivitas pelaporan kendala, traffic harian,
+                        permintaan backup barang, dan proses tindak lanjut operasional parkir.
+                    </p>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="hero-mini-card">
+                                <div class="hero-mini-label">Role</div>
+                                <p class="hero-mini-value">{{ $roleLabel }}</p>
+                            </div>
+                        </div>
+
+                        <div class="col-6">
+                            <div class="hero-mini-card">
+                                <div class="hero-mini-label">Status</div>
+                                <p class="hero-mini-value">Aktif</p>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="hero-mini-card">
+                                <div class="hero-mini-label">Lokasi Operasional</div>
+                                <p class="hero-mini-value">{{ $locationName ?? 'Seluruh Lokasi / Sesuai Akses' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     {{-- PETUGAS PARKIR --}}
     @if ($role === 'petugas')
         <div class="row g-4 mb-4">
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
                     <div class="d-flex justify-content-between align-items-start gap-3">
                         <div>
-                            <div class="stat-label">Laporan Kendala Saya</div>
+                            <div class="stat-label">Laporan Kendala</div>
                             <div class="stat-value text-primary">{{ $myIssueReports ?? 0 }}</div>
-                            <div class="stat-desc">Total laporan dibuat</div>
+                            <div class="stat-desc">Total laporan yang dibuat</div>
                         </div>
                         <div class="stat-icon primary">
                             <i class="bi bi-exclamation-triangle"></i>
@@ -277,13 +443,13 @@
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
                     <div class="d-flex justify-content-between align-items-start gap-3">
                         <div>
                             <div class="stat-label">Menunggu Verifikasi</div>
                             <div class="stat-value text-warning">{{ $myPendingReports ?? 0 }}</div>
-                            <div class="stat-desc">Menunggu Manajer</div>
+                            <div class="stat-desc">Menunggu pemeriksaan Manajer</div>
                         </div>
                         <div class="stat-icon warning">
                             <i class="bi bi-hourglass-split"></i>
@@ -292,13 +458,13 @@
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
                     <div class="d-flex justify-content-between align-items-start gap-3">
                         <div>
                             <div class="stat-label">Dalam Proses</div>
                             <div class="stat-value text-info">{{ $myProcessReports ?? 0 }}</div>
-                            <div class="stat-desc">Sedang ditangani teknisi</div>
+                            <div class="stat-desc">Sedang ditangani Teknisi</div>
                         </div>
                         <div class="stat-icon info">
                             <i class="bi bi-tools"></i>
@@ -307,13 +473,13 @@
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
                     <div class="d-flex justify-content-between align-items-start gap-3">
                         <div>
                             <div class="stat-label">Permintaan Backup</div>
                             <div class="stat-value text-success">{{ $myBackupRequests ?? 0 }}</div>
-                            <div class="stat-desc">Total permintaan backup</div>
+                            <div class="stat-desc">Total pengajuan barang backup</div>
                         </div>
                         <div class="stat-icon success">
                             <i class="bi bi-box-seam"></i>
@@ -332,8 +498,8 @@
                                 <i class="bi bi-plus-circle"></i>
                             </div>
                             <div>
-                                <h5 class="fw-bold mb-1 text-dark">Buat Laporan Kendala</h5>
-                                <p class="text-muted mb-0 small">Laporkan kendala parkir yang terjadi di lokasi.</p>
+                                <h5 class="quick-title">Buat Laporan Kendala</h5>
+                                <p class="quick-desc">Laporkan kendala parkir yang terjadi di lokasi operasional.</p>
                             </div>
                         </div>
                     </div>
@@ -348,8 +514,8 @@
                                 <i class="bi bi-bar-chart-line"></i>
                             </div>
                             <div>
-                                <h5 class="fw-bold mb-1 text-dark">Input Traffic Harian</h5>
-                                <p class="text-muted mb-0 small">Catat data kendaraan dan transaksi harian.</p>
+                                <h5 class="quick-title">Input Traffic Harian</h5>
+                                <p class="quick-desc">Catat kendaraan masuk, keluar, transaksi, dan pendapatan.</p>
                             </div>
                         </div>
                     </div>
@@ -364,8 +530,8 @@
                                 <i class="bi bi-box-seam"></i>
                             </div>
                             <div>
-                                <h5 class="fw-bold mb-1 text-dark">Ajukan Backup Barang</h5>
-                                <p class="text-muted mb-0 small">Ajukan kebutuhan barang backup operasional.</p>
+                                <h5 class="quick-title">Ajukan Backup Barang</h5>
+                                <p class="quick-desc">Ajukan kebutuhan barang backup untuk operasional parkir.</p>
                             </div>
                         </div>
                     </div>
@@ -376,9 +542,18 @@
         <div class="row g-4">
             <div class="col-lg-7">
                 <div class="page-card p-4 h-100">
-                    <h5 class="section-title">Laporan Kendala Terbaru</h5>
+                    <div class="dashboard-section-header">
+                        <div>
+                            <h5 class="section-title">Laporan Kendala Terbaru</h5>
+                            <p class="section-subtitle">Riwayat laporan terbaru berdasarkan lokasi operasional Anda.</p>
+                        </div>
 
-                    <div class="table-responsive mt-3">
+                        <a href="{{ route('issue-reports.index') }}" class="btn btn-soft-primary">
+                            Lihat Semua
+                        </a>
+                    </div>
+
+                    <div class="table-responsive">
                         <table class="table align-middle">
                             <thead>
                                 <tr>
@@ -392,22 +567,23 @@
                                 @forelse (($latestIssueReports ?? collect()) as $report)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('issue-reports.show', $report) }}" class="fw-bold text-primary">
+                                            <a href="{{ route('issue-reports.show', $report) }}" class="table-link-title">
                                                 {{ $report->report_number ?? '-' }}
                                             </a>
-                                            <div class="text-muted small">{{ $report->title ?? '-' }}</div>
+                                            <div class="table-subtext">{{ $report->title ?? '-' }}</div>
                                         </td>
                                         <td>{{ $report->parkingLocation->location_name ?? '-' }}</td>
                                         <td>
-                                            <span class="badge rounded-pill {{ $statusBadgeClass($report->status ?? '') }}">
+                                            <span class="badge {{ $statusBadgeClass($report->status ?? '') }}">
                                                 {{ $report->status ?? '-' }}
                                             </span>
                                         </td>
-                                        <td>{{ $report->created_at?->format('d M Y') ?? '-' }}</td>
+                                        <td>{{ $report->created_at?->format('d M Y H:i') ?? '-' }} WIB</td>
                                     </tr>
                                 @empty
                                     <tr>
                                         <td colspan="4" class="empty-state">
+                                            <i class="bi bi-inbox"></i>
                                             Belum ada laporan kendala.
                                         </td>
                                     </tr>
@@ -420,9 +596,18 @@
 
             <div class="col-lg-5">
                 <div class="page-card p-4 h-100">
-                    <h5 class="section-title">Traffic Harian Terbaru</h5>
+                    <div class="dashboard-section-header">
+                        <div>
+                            <h5 class="section-title">Traffic Harian Terbaru</h5>
+                            <p class="section-subtitle">Data traffic terbaru dari lokasi operasional Anda.</p>
+                        </div>
 
-                    <div class="table-responsive mt-3">
+                        <a href="{{ route('traffic-reports.index') }}" class="btn btn-soft-primary">
+                            Lihat
+                        </a>
+                    </div>
+
+                    <div class="table-responsive">
                         <table class="table align-middle">
                             <thead>
                                 <tr>
@@ -441,6 +626,7 @@
                                 @empty
                                     <tr>
                                         <td colspan="3" class="empty-state">
+                                            <i class="bi bi-bar-chart"></i>
                                             Belum ada traffic harian.
                                         </td>
                                     </tr>
@@ -456,13 +642,13 @@
     {{-- TEKNISI VENDOR --}}
     @if ($role === 'teknisi')
         <div class="row g-4 mb-4">
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
                     <div class="d-flex justify-content-between align-items-start gap-3">
                         <div>
                             <div class="stat-label">Total Tugas</div>
                             <div class="stat-value text-primary">{{ $assignedReports ?? 0 }}</div>
-                            <div class="stat-desc">Laporan ditugaskan</div>
+                            <div class="stat-desc">Laporan yang ditugaskan</div>
                         </div>
                         <div class="stat-icon primary">
                             <i class="bi bi-clipboard-check"></i>
@@ -471,13 +657,13 @@
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
                     <div class="d-flex justify-content-between align-items-start gap-3">
                         <div>
                             <div class="stat-label">Dalam Proses</div>
                             <div class="stat-value text-info">{{ $processReports ?? 0 }}</div>
-                            <div class="stat-desc">Sedang ditangani</div>
+                            <div class="stat-desc">Sedang Anda tangani</div>
                         </div>
                         <div class="stat-icon info">
                             <i class="bi bi-tools"></i>
@@ -486,13 +672,13 @@
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
                     <div class="d-flex justify-content-between align-items-start gap-3">
                         <div>
                             <div class="stat-label">Menunggu Informasi</div>
                             <div class="stat-value text-secondary">{{ $waitingInfoReports ?? 0 }}</div>
-                            <div class="stat-desc">Butuh data tambahan</div>
+                            <div class="stat-desc">Membutuhkan data tambahan</div>
                         </div>
                         <div class="stat-icon secondary">
                             <i class="bi bi-info-circle"></i>
@@ -501,7 +687,7 @@
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
                     <div class="d-flex justify-content-between align-items-start gap-3">
                         <div>
@@ -518,10 +704,10 @@
         </div>
 
         <div class="page-card p-4">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+            <div class="dashboard-section-header">
                 <div>
                     <h5 class="section-title">Laporan Ditugaskan Terbaru</h5>
-                    <p class="section-subtitle">Daftar laporan kendala yang ditugaskan kepada Anda.</p>
+                    <p class="section-subtitle">Daftar laporan kendala yang perlu ditindaklanjuti oleh Teknisi Vendor.</p>
                 </div>
 
                 <a href="{{ route('technician-reports.index') }}" class="btn btn-soft-primary">
@@ -545,17 +731,17 @@
                         @forelse (($latestAssignedReports ?? collect()) as $report)
                             <tr>
                                 <td>
-                                    <div class="fw-bold text-primary">{{ $report->report_number ?? '-' }}</div>
-                                    <div class="text-muted small">{{ $report->title ?? '-' }}</div>
+                                    <div class="table-link-title">{{ $report->report_number ?? '-' }}</div>
+                                    <div class="table-subtext">{{ $report->title ?? '-' }}</div>
                                 </td>
                                 <td>{{ $report->parkingLocation->location_name ?? '-' }}</td>
                                 <td>{{ $report->reporter->full_name ?? $report->reporter->name ?? '-' }}</td>
                                 <td>
-                                    <span class="badge rounded-pill {{ $statusBadgeClass($report->status ?? '') }}">
+                                    <span class="badge {{ $statusBadgeClass($report->status ?? '') }}">
                                         {{ $report->status ?? '-' }}
                                     </span>
                                 </td>
-                                <td>{{ $report->created_at?->format('d M Y') ?? '-' }}</td>
+                                <td>{{ $report->created_at?->format('d M Y H:i') ?? '-' }} WIB</td>
                                 <td class="text-end">
                                     <a href="{{ route('technician-reports.show', $report) }}" class="btn btn-sm btn-soft-primary">
                                         Detail
@@ -565,6 +751,7 @@
                         @empty
                             <tr>
                                 <td colspan="6" class="empty-state">
+                                    <i class="bi bi-clipboard-x"></i>
                                     Belum ada laporan yang ditugaskan.
                                 </td>
                             </tr>
@@ -578,35 +765,63 @@
     {{-- MANAJER OPERASIONAL --}}
     @if ($role === 'manajer')
         <div class="row g-4 mb-4">
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
-                    <div class="stat-label">Total Laporan Kendala</div>
-                    <div class="stat-value text-primary">{{ $totalIssueReports ?? 0 }}</div>
-                    <div class="stat-desc">Seluruh laporan masuk</div>
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="stat-label">Total Laporan Kendala</div>
+                            <div class="stat-value text-primary">{{ $totalIssueReports ?? 0 }}</div>
+                            <div class="stat-desc">Seluruh laporan yang masuk</div>
+                        </div>
+                        <div class="stat-icon primary">
+                            <i class="bi bi-folder2-open"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
-                    <div class="stat-label">Menunggu Verifikasi</div>
-                    <div class="stat-value text-warning">{{ $waitingVerificationReports ?? 0 }}</div>
-                    <div class="stat-desc">Perlu approve / reject</div>
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="stat-label">Menunggu Verifikasi</div>
+                            <div class="stat-value text-warning">{{ $waitingVerificationReports ?? 0 }}</div>
+                            <div class="stat-desc">Perlu approve atau reject</div>
+                        </div>
+                        <div class="stat-icon warning">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
-                    <div class="stat-label">Backup Menunggu Approval</div>
-                    <div class="stat-value text-danger">{{ $backupRequestsWaiting ?? 0 }}</div>
-                    <div class="stat-desc">Permintaan backup baru</div>
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="stat-label">Backup Waiting</div>
+                            <div class="stat-value text-danger">{{ $backupRequestsWaiting ?? 0 }}</div>
+                            <div class="stat-desc">Permintaan backup baru</div>
+                        </div>
+                        <div class="stat-icon danger">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
-                    <div class="stat-label">Traffic Bulan Ini</div>
-                    <div class="stat-value text-success">{{ $trafficReportsThisMonth ?? 0 }}</div>
-                    <div class="stat-desc">Laporan traffic masuk</div>
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="stat-label">Traffic Bulan Ini</div>
+                            <div class="stat-value text-success">{{ $trafficReportsThisMonth ?? 0 }}</div>
+                            <div class="stat-desc">Laporan traffic masuk</div>
+                        </div>
+                        <div class="stat-icon success">
+                            <i class="bi bi-bar-chart-line"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -614,15 +829,31 @@
         <div class="row g-4 mb-4">
             <div class="col-lg-6">
                 <div class="page-card p-4 h-100">
-                    <h5 class="section-title">Grafik Status Laporan Kendala</h5>
-                    <canvas id="issueStatusChart" height="180" class="mt-3"></canvas>
+                    <div class="dashboard-section-header">
+                        <div>
+                            <h5 class="section-title">Grafik Status Laporan Kendala</h5>
+                            <p class="section-subtitle">Ringkasan status laporan kendala operasional.</p>
+                        </div>
+                    </div>
+
+                    <div class="chart-wrap">
+                        <canvas id="issueStatusChart" height="180"></canvas>
+                    </div>
                 </div>
             </div>
 
             <div class="col-lg-6">
                 <div class="page-card p-4 h-100">
-                    <h5 class="section-title">Grafik Status Permintaan Backup</h5>
-                    <canvas id="backupStatusChart" height="180" class="mt-3"></canvas>
+                    <div class="dashboard-section-header">
+                        <div>
+                            <h5 class="section-title">Grafik Status Permintaan Backup</h5>
+                            <p class="section-subtitle">Ringkasan status pengajuan barang backup.</p>
+                        </div>
+                    </div>
+
+                    <div class="chart-wrap">
+                        <canvas id="backupStatusChart" height="180"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -631,24 +862,24 @@
             <div class="col-md-4">
                 <div class="page-card p-4 h-100">
                     <div class="stat-label">Total Kendaraan Bulan Ini</div>
-                    <h4 class="fw-bold mb-0">{{ number_format($totalVehiclesThisMonth ?? 0) }}</h4>
-                    <div class="stat-desc mt-2">Berdasarkan laporan traffic</div>
+                    <h4 class="fw-bold mb-0 text-primary">{{ number_format($totalVehiclesThisMonth ?? 0) }}</h4>
+                    <div class="stat-desc mt-2">Berdasarkan laporan traffic harian.</div>
                 </div>
             </div>
 
             <div class="col-md-4">
                 <div class="page-card p-4 h-100">
                     <div class="stat-label">Pendapatan Bulan Ini</div>
-                    <h4 class="fw-bold mb-0">Rp {{ number_format($totalTrafficIncomeThisMonth ?? 0, 0, ',', '.') }}</h4>
-                    <div class="stat-desc mt-2">Berdasarkan laporan traffic</div>
+                    <h4 class="fw-bold mb-0 text-success">Rp {{ number_format($totalTrafficIncomeThisMonth ?? 0, 0, ',', '.') }}</h4>
+                    <div class="stat-desc mt-2">Akumulasi pendapatan dari laporan traffic.</div>
                 </div>
             </div>
 
             <div class="col-md-4">
                 <div class="page-card p-4 h-100">
                     <div class="stat-label">Backup Bulan Ini</div>
-                    <h4 class="fw-bold mb-0">{{ $backupRequestsThisMonth ?? 0 }}</h4>
-                    <div class="stat-desc mt-2">Total permintaan backup</div>
+                    <h4 class="fw-bold mb-0 text-warning">{{ $backupRequestsThisMonth ?? 0 }}</h4>
+                    <div class="stat-desc mt-2">Total permintaan backup barang.</div>
                 </div>
             </div>
         </div>
@@ -656,7 +887,7 @@
         <div class="row g-4">
             <div class="col-lg-7">
                 <div class="page-card p-4 h-100">
-                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                    <div class="dashboard-section-header">
                         <div>
                             <h5 class="section-title">Laporan Kendala Terbaru</h5>
                             <p class="section-subtitle">Pantau laporan terbaru dari Petugas Parkir.</p>
@@ -681,15 +912,15 @@
                                 @forelse (($latestIssueReports ?? collect()) as $report)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('manage-reports.show', $report) }}" class="fw-bold text-primary">
+                                            <a href="{{ route('manage-reports.show', $report) }}" class="table-link-title">
                                                 {{ $report->report_number ?? '-' }}
                                             </a>
-                                            <div class="text-muted small">{{ $report->title ?? '-' }}</div>
+                                            <div class="table-subtext">{{ $report->title ?? '-' }}</div>
                                         </td>
                                         <td>{{ $report->parkingLocation->location_name ?? '-' }}</td>
                                         <td>{{ $report->reporter->full_name ?? $report->reporter->name ?? '-' }}</td>
                                         <td>
-                                            <span class="badge rounded-pill {{ $statusBadgeClass($report->status ?? '') }}">
+                                            <span class="badge {{ $statusBadgeClass($report->status ?? '') }}">
                                                 {{ $report->status ?? '-' }}
                                             </span>
                                         </td>
@@ -697,6 +928,7 @@
                                 @empty
                                     <tr>
                                         <td colspan="4" class="empty-state">
+                                            <i class="bi bi-inbox"></i>
                                             Belum ada laporan kendala.
                                         </td>
                                     </tr>
@@ -709,10 +941,10 @@
 
             <div class="col-lg-5">
                 <div class="page-card p-4 h-100">
-                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                    <div class="dashboard-section-header">
                         <div>
                             <h5 class="section-title">Permintaan Backup Terbaru</h5>
-                            <p class="section-subtitle">Manajer approve/reject permintaan backup.</p>
+                            <p class="section-subtitle">Permintaan backup yang membutuhkan monitoring Manajer.</p>
                         </div>
 
                         <a href="{{ route('backup-requests.index') }}" class="btn btn-soft-primary">
@@ -733,16 +965,16 @@
                                 @forelse (($latestBackupRequests ?? collect()) as $request)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('backup-requests.show', $request) }}" class="fw-bold text-primary">
+                                            <a href="{{ route('backup-requests.show', $request) }}" class="table-link-title">
                                                 {{ $request->request_number ?? '-' }}
                                             </a>
-                                            <div class="text-muted small">
+                                            <div class="table-subtext">
                                                 {{ $request->requester->full_name ?? $request->requester->name ?? '-' }}
                                             </div>
                                         </td>
                                         <td>{{ $request->backupItem->item_name ?? '-' }}</td>
                                         <td>
-                                            <span class="badge rounded-pill {{ $statusBadgeClass($request->status ?? '') }}">
+                                            <span class="badge {{ $statusBadgeClass($request->status ?? '') }}">
                                                 {{ $request->status ?? '-' }}
                                             </span>
                                         </td>
@@ -750,6 +982,7 @@
                                 @empty
                                     <tr>
                                         <td colspan="3" class="empty-state">
+                                            <i class="bi bi-box"></i>
                                             Belum ada permintaan backup.
                                         </td>
                                     </tr>
@@ -759,7 +992,7 @@
                     </div>
 
                     <div class="mt-3">
-                        <a href="{{ route('report-recaps.index') }}" class="btn btn-primary rounded-3 w-100">
+                        <a href="{{ route('report-recaps.index') }}" class="btn btn-primary w-100">
                             <i class="bi bi-file-earmark-bar-graph me-1"></i>
                             Buka Laporan Rekap
                         </a>
@@ -772,60 +1005,108 @@
     {{-- ADMIN OPERASIONAL --}}
     @if ($role === 'admin')
         <div class="row g-4 mb-4">
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
-                    <div class="stat-label">Total Lokasi Parkir</div>
-                    <div class="stat-value text-primary">{{ $totalLocations ?? 0 }}</div>
-                    <div class="stat-desc">Master lokasi</div>
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="stat-label">Total Lokasi Parkir</div>
+                            <div class="stat-value text-primary">{{ $totalLocations ?? 0 }}</div>
+                            <div class="stat-desc">Data master lokasi operasional</div>
+                        </div>
+                        <div class="stat-icon primary">
+                            <i class="bi bi-geo-alt"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
-                    <div class="stat-label">Total Barang Backup</div>
-                    <div class="stat-value text-success">{{ $totalBackupItems ?? 0 }}</div>
-                    <div class="stat-desc">Master barang</div>
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="stat-label">Total Barang Backup</div>
+                            <div class="stat-value text-success">{{ $totalBackupItems ?? 0 }}</div>
+                            <div class="stat-desc">Data master barang backup</div>
+                        </div>
+                        <div class="stat-icon success">
+                            <i class="bi bi-box"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
-                    <div class="stat-label">Siap Diproses</div>
-                    <div class="stat-value text-warning">{{ $backupRequestsApproved ?? 0 }}</div>
-                    <div class="stat-desc">Backup sudah disetujui</div>
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="stat-label">Siap Diproses</div>
+                            <div class="stat-value text-warning">{{ $backupRequestsApproved ?? 0 }}</div>
+                            <div class="stat-desc">Backup sudah disetujui Manajer</div>
+                        </div>
+                        <div class="stat-icon warning">
+                            <i class="bi bi-check2-square"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-xl-3 col-md-6">
                 <div class="page-card stat-card p-4 h-100">
-                    <div class="stat-label">Stok Menipis</div>
-                    <div class="stat-value text-danger">{{ $lowStockItems ?? 0 }}</div>
-                    <div class="stat-desc">Stok kurang/sama dengan 2</div>
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="stat-label">Stok Menipis</div>
+                            <div class="stat-value text-danger">{{ $lowStockItems ?? 0 }}</div>
+                            <div class="stat-desc">Barang dengan stok rendah</div>
+                        </div>
+                        <div class="stat-icon danger">
+                            <i class="bi bi-exclamation-octagon"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="alert alert-info rounded-4 border-0 mb-4">
-            <div class="fw-bold mb-1">
-                <i class="bi bi-info-circle-fill me-1"></i>
-                Alur Admin Operasional
+        <div class="page-card p-4 mb-4">
+            <div class="d-flex gap-3 align-items-start">
+                <div class="stat-icon primary">
+                    <i class="bi bi-info-circle"></i>
+                </div>
+                <div>
+                    <h5 class="section-title mb-1">Alur Admin Operasional</h5>
+                    <p class="section-subtitle mb-0">
+                        Admin Operasional mengelola master lokasi, master barang backup, stok barang,
+                        serta memproses permintaan backup yang sudah disetujui oleh Manajer Operasional.
+                    </p>
+                </div>
             </div>
-            Admin Operasional mengelola master lokasi, master barang backup, stok barang, dan memproses permintaan backup yang sudah disetujui Manajer Operasional.
         </div>
 
         <div class="row g-4 mb-4">
             <div class="col-lg-6">
                 <div class="page-card p-4 h-100">
-                    <h5 class="section-title">Status Permintaan Backup</h5>
-                    <canvas id="adminBackupStatusChart" height="180" class="mt-3"></canvas>
+                    <div class="dashboard-section-header">
+                        <div>
+                            <h5 class="section-title">Status Permintaan Backup</h5>
+                            <p class="section-subtitle">Ringkasan status permintaan backup barang.</p>
+                        </div>
+                    </div>
+
+                    <div class="chart-wrap">
+                        <canvas id="adminBackupStatusChart" height="180"></canvas>
+                    </div>
                 </div>
             </div>
 
             <div class="col-lg-6">
                 <div class="page-card p-4 h-100">
-                    <h5 class="section-title">Ringkasan Master Data</h5>
+                    <div class="dashboard-section-header">
+                        <div>
+                            <h5 class="section-title">Ringkasan Master Data</h5>
+                            <p class="section-subtitle">Informasi kondisi data lokasi dan stok barang.</p>
+                        </div>
+                    </div>
 
-                    <div class="row g-3 mt-2">
+                    <div class="row g-3">
                         <div class="col-md-6">
                             <div class="info-panel h-100">
                                 <div class="info-panel-label">Lokasi Aktif</div>
@@ -855,11 +1136,11 @@
                         </div>
                     </div>
 
-                    <div class="d-flex gap-2 mt-4">
-                        <a href="{{ route('parking-locations.index') }}" class="btn btn-soft-primary w-100">
+                    <div class="d-flex gap-2 mt-4 flex-wrap">
+                        <a href="{{ route('parking-locations.index') }}" class="btn btn-soft-primary flex-fill">
                             Master Lokasi
                         </a>
-                        <a href="{{ route('backup-items.index') }}" class="btn btn-primary rounded-3 w-100">
+                        <a href="{{ route('backup-items.index') }}" class="btn btn-primary flex-fill">
                             Master Barang
                         </a>
                     </div>
@@ -870,7 +1151,7 @@
         <div class="row g-4">
             <div class="col-lg-7">
                 <div class="page-card p-4 h-100">
-                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                    <div class="dashboard-section-header">
                         <div>
                             <h5 class="section-title">Backup Siap Diproses</h5>
                             <p class="section-subtitle">
@@ -897,8 +1178,8 @@
                                 @forelse (($approvedBackupRequests ?? collect()) as $request)
                                     <tr>
                                         <td>
-                                            <div class="fw-bold text-primary">{{ $request->request_number ?? '-' }}</div>
-                                            <div class="text-muted small">{{ $request->requester->full_name ?? $request->requester->name ?? '-' }}</div>
+                                            <div class="table-link-title">{{ $request->request_number ?? '-' }}</div>
+                                            <div class="table-subtext">{{ $request->requester->full_name ?? $request->requester->name ?? '-' }}</div>
                                         </td>
                                         <td>{{ $request->backupItem->item_name ?? '-' }}</td>
                                         <td>{{ $request->parkingLocation->location_name ?? '-' }}</td>
@@ -911,6 +1192,7 @@
                                 @empty
                                     <tr>
                                         <td colspan="4" class="empty-state">
+                                            <i class="bi bi-box"></i>
                                             Belum ada permintaan backup yang siap diproses.
                                         </td>
                                     </tr>
@@ -923,9 +1205,14 @@
 
             <div class="col-lg-5">
                 <div class="page-card p-4 h-100">
-                    <h5 class="section-title">Barang Stok Menipis</h5>
+                    <div class="dashboard-section-header">
+                        <div>
+                            <h5 class="section-title">Barang Stok Menipis</h5>
+                            <p class="section-subtitle">Daftar barang backup yang perlu diperhatikan stoknya.</p>
+                        </div>
+                    </div>
 
-                    <div class="table-responsive mt-3">
+                    <div class="table-responsive">
                         <table class="table align-middle">
                             <thead>
                                 <tr>
@@ -938,10 +1225,10 @@
                                 @forelse (($lowStockBackupItems ?? collect()) as $item)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('backup-items.show', $item) }}" class="fw-bold text-primary">
+                                            <a href="{{ route('backup-items.show', $item) }}" class="table-link-title">
                                                 {{ $item->item_name ?? '-' }}
                                             </a>
-                                            <div class="text-muted small">{{ $item->item_code ?? '-' }}</div>
+                                            <div class="table-subtext">{{ $item->item_code ?? '-' }}</div>
                                         </td>
                                         <td>
                                             <span class="fw-bold {{ ($item->stock ?? 0) <= 0 ? 'text-danger' : 'text-warning' }}">
@@ -949,7 +1236,7 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <span class="badge rounded-pill {{ ($item->status ?? '') === 'Tersedia' ? 'bg-success' : 'bg-secondary' }}">
+                                            <span class="badge {{ ($item->status ?? '') === 'Tersedia' ? 'bg-success' : 'bg-secondary' }}">
                                                 {{ $item->status ?? '-' }}
                                             </span>
                                         </td>
@@ -957,6 +1244,7 @@
                                 @empty
                                     <tr>
                                         <td colspan="3" class="empty-state">
+                                            <i class="bi bi-check-circle"></i>
                                             Tidak ada barang dengan stok menipis.
                                         </td>
                                     </tr>
@@ -966,7 +1254,7 @@
                     </div>
 
                     <div class="mt-3">
-                        <a href="{{ route('backup-items.index') }}" class="btn btn-primary rounded-3 w-100">
+                        <a href="{{ route('backup-items.index') }}" class="btn btn-primary w-100">
                             Kelola Master Barang Backup
                         </a>
                     </div>
@@ -982,6 +1270,9 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
         <script>
+            const chartGridColor = 'rgba(215, 227, 247, 0.9)';
+            const chartTextColor = '#5f719a';
+
             @if ($role === 'manajer')
                 const issueStatusChartElement = document.getElementById('issueStatusChart');
 
@@ -1002,21 +1293,48 @@
                                     '#212529'
                                 ],
                                 borderWidth: 0,
-                                borderRadius: 8
+                                borderRadius: 10,
+                                maxBarThickness: 46
                             }]
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
                             plugins: {
                                 legend: {
                                     display: false
+                                },
+                                tooltip: {
+                                    backgroundColor: '#071b4d',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#ffffff',
+                                    padding: 12,
+                                    cornerRadius: 10
                                 }
                             },
                             scales: {
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    ticks: {
+                                        color: chartTextColor,
+                                        font: {
+                                            weight: 700
+                                        }
+                                    }
+                                },
                                 y: {
                                     beginAtZero: true,
+                                    grid: {
+                                        color: chartGridColor
+                                    },
                                     ticks: {
-                                        precision: 0
+                                        precision: 0,
+                                        color: chartTextColor,
+                                        font: {
+                                            weight: 700
+                                        }
                                     }
                                 }
                             }
@@ -1040,14 +1358,32 @@
                                     '#0dcaf0',
                                     '#0d6efd'
                                 ],
-                                borderWidth: 2
+                                borderColor: '#ffffff',
+                                borderWidth: 3
                             }]
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '62%',
                             plugins: {
                                 legend: {
-                                    position: 'bottom'
+                                    position: 'bottom',
+                                    labels: {
+                                        color: chartTextColor,
+                                        font: {
+                                            weight: 700
+                                        },
+                                        usePointStyle: true,
+                                        padding: 16
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: '#071b4d',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#ffffff',
+                                    padding: 12,
+                                    cornerRadius: 10
                                 }
                             }
                         }
@@ -1072,14 +1408,32 @@
                                     '#0dcaf0',
                                     '#0d6efd'
                                 ],
-                                borderWidth: 2
+                                borderColor: '#ffffff',
+                                borderWidth: 3
                             }]
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '62%',
                             plugins: {
                                 legend: {
-                                    position: 'bottom'
+                                    position: 'bottom',
+                                    labels: {
+                                        color: chartTextColor,
+                                        font: {
+                                            weight: 700
+                                        },
+                                        usePointStyle: true,
+                                        padding: 16
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: '#071b4d',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#ffffff',
+                                    padding: 12,
+                                    cornerRadius: 10
                                 }
                             }
                         }

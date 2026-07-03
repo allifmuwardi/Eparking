@@ -1,41 +1,40 @@
 @extends('layouts.app')
 
 @section('title', 'Buat Laporan Kendala | Sistem Penanganan Kendala Parkir')
+@section('page_title', 'Buat Laporan Kendala')
+@section('page_subtitle', 'Input laporan kendala operasional parkir')
 
 @section('content')
 @php
     $authUser = Auth::user();
-    $location = $selectedLocation ?? $locations->first() ?? null;
+    $location = $selectedLocation ?? $locations->first() ?? $authUser->parkingLocation ?? null;
 
     $locationLabel = 'Belum ditentukan';
 
     if ($location) {
         $locationLabel = $location->location_name ?? '-';
 
-        if (!empty($location->area_zone)) {
-            $locationLabel .= ' - ' . $location->area_zone;
+        if (!empty($location->location_code)) {
+            $locationLabel .= ' (' . $location->location_code . ')';
         }
     }
 @endphp
 
 <style>
-    .form-page-header {
-        margin-bottom: 24px;
-    }
-
     .form-page-title {
         color: #071b4d;
-        font-size: 27px;
+        font-size: 26px;
         font-weight: 950;
-        letter-spacing: -0.4px;
+        letter-spacing: -0.35px;
         margin-bottom: 6px;
     }
 
     .form-page-subtitle {
         color: #5f719a;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 650;
         margin-bottom: 0;
+        line-height: 1.55;
     }
 
     .header-icon {
@@ -52,76 +51,32 @@
         flex-shrink: 0;
     }
 
-    .section-title {
+    .section-title-local {
         color: #071b4d;
         font-size: 18px;
         font-weight: 950;
         margin-bottom: 4px;
     }
 
-    .section-subtitle {
+    .section-subtitle-local {
         color: #7b8caf;
         font-size: 13px;
-        font-weight: 600;
-        margin-bottom: 0;
-    }
-
-    .form-label {
-        color: #071b4d;
-        font-size: 14px;
-        font-weight: 850;
-        margin-bottom: 8px;
-    }
-
-    .form-control,
-    .form-select {
-        min-height: 50px;
-        border-radius: 13px;
-        border: 1px solid #d7e3f7;
-        background-color: #f8fbff;
-        color: #071b4d;
         font-weight: 650;
-    }
-
-    .form-control:focus,
-    .form-select:focus {
-        background-color: #ffffff;
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
-    }
-
-    textarea.form-control {
-        min-height: 150px;
-    }
-
-    .help-text {
-        color: #7b8caf;
-        font-size: 12px;
-        font-weight: 600;
-        margin-top: 6px;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #1f6de2, #0649bd);
-        border: none;
-        font-weight: 850;
-        box-shadow: 0 12px 22px rgba(13, 110, 253, 0.20);
-    }
-
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #0d63dd, #003f9d);
+        margin-bottom: 0;
+        line-height: 1.5;
     }
 
     .btn-soft {
         border: 1px solid #d7e3f7;
         background: #ffffff;
         color: #071b4d;
-        font-weight: 800;
+        font-weight: 850;
     }
 
     .btn-soft:hover {
         background: #f3f8ff;
         border-color: #b9cbea;
+        color: #0649bd;
     }
 
     .location-box {
@@ -150,7 +105,7 @@
     .location-label {
         color: #7b8caf;
         font-size: 12px;
-        font-weight: 850;
+        font-weight: 900;
         text-transform: uppercase;
         letter-spacing: 0.04em;
         margin-bottom: 4px;
@@ -161,6 +116,32 @@
         font-size: 18px;
         font-weight: 950;
         margin-bottom: 3px;
+    }
+
+    .upload-box {
+        border-radius: 18px;
+        border: 1px dashed #b9cbea;
+        background: linear-gradient(180deg, #f8fbff, #ffffff);
+        padding: 22px;
+    }
+
+    .help-text {
+        color: #7b8caf;
+        font-size: 12px;
+        font-weight: 650;
+        margin-top: 6px;
+    }
+
+    textarea.form-control {
+        min-height: 160px;
+    }
+
+    .action-card {
+        border-radius: 20px;
+        border: 1px solid #d7e3f7;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
+        padding: 20px;
     }
 
     .note-item {
@@ -184,53 +165,26 @@
         font-size: 19px;
     }
 
-    .note-icon.primary {
-        background: #eaf3ff;
-        color: #0d6efd;
-    }
+    .note-icon.primary { background: #eaf3ff; color: #0d6efd; }
+    .note-icon.success { background: #e7f7ee; color: #198754; }
+    .note-icon.warning { background: #fff6dc; color: #d99a00; }
+    .note-icon.danger { background: #fde8e8; color: #dc3545; }
 
-    .note-icon.success {
-        background: #e7f7ee;
-        color: #198754;
-    }
-
-    .note-icon.warning {
-        background: #fff6dc;
-        color: #d99a00;
-    }
-
-    .note-icon.info {
-        background: #e5f8ff;
-        color: #0bb4d8;
-    }
-
-    .priority-item {
+    .priority-card {
         border-radius: 16px;
         border: 1px solid #d7e3f7;
-        background: #ffffff;
-        padding: 13px;
+        background: #f8fbff;
+        padding: 14px;
         margin-bottom: 10px;
     }
 
-    .upload-box {
-        border-radius: 18px;
-        border: 1px dashed #b9cbea;
-        background: linear-gradient(180deg, #f8fbff, #ffffff);
-        padding: 22px;
-    }
-
-    .action-card {
-        border-radius: 20px;
-        border: 1px solid #d7e3f7;
-        background: rgba(255, 255, 255, 0.94);
-        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
-        padding: 20px;
+    .priority-card:last-child {
+        margin-bottom: 0;
     }
 </style>
 
-<div class="container-fluid">
-    {{-- Header --}}
-    <div class="form-page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
         <div class="d-flex align-items-center gap-3">
             <div class="header-icon">
                 <i class="bi bi-plus-circle"></i>
@@ -258,17 +212,15 @@
         @endif
 
         <div class="row g-4">
-            {{-- Form Utama --}}
             <div class="col-lg-8">
                 <div class="page-card p-4 mb-4">
                     <div class="mb-4">
-                        <h5 class="section-title">Informasi Kendala</h5>
-                        <p class="section-subtitle">
+                        <h5 class="section-title-local">Informasi Kendala</h5>
+                        <p class="section-subtitle-local">
                             Lengkapi informasi utama kendala yang ditemukan di area parkir.
                         </p>
                     </div>
 
-                    {{-- Lokasi Otomatis --}}
                     <div class="location-box mb-4">
                         <div class="d-flex align-items-start gap-3">
                             <div class="location-icon">
@@ -278,7 +230,7 @@
                             <div>
                                 <div class="location-label">Lokasi Operasional</div>
                                 <div class="location-value">{{ $locationLabel }}</div>
-                                <div class="text-muted small">
+                                <div class="text-muted small fw-semibold">
                                     Lokasi laporan otomatis mengikuti lokasi operasional akun Anda.
                                 </div>
                             </div>
@@ -297,13 +249,8 @@
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">
-                                Kategori Kendala <span class="text-danger">*</span>
-                            </label>
-
-                            <select name="category"
-                                    class="form-select @error('category') is-invalid @enderror"
-                                    {{ !$location ? 'disabled' : '' }}>
+                            <label class="form-label">Kategori Kendala <span class="text-danger">*</span></label>
+                            <select name="category" class="form-select @error('category') is-invalid @enderror" {{ !$location ? 'disabled' : '' }} required>
                                 <option value="">Pilih Kategori</option>
                                 <option value="Perangkat" {{ old('category') === 'Perangkat' ? 'selected' : '' }}>Perangkat</option>
                                 <option value="Sistem" {{ old('category') === 'Sistem' ? 'selected' : '' }}>Sistem</option>
@@ -312,52 +259,24 @@
                                 <option value="Jaringan" {{ old('category') === 'Jaringan' ? 'selected' : '' }}>Jaringan</option>
                                 <option value="Lainnya" {{ old('category') === 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
                             </select>
-
-                            @error('category')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
-                            <div class="help-text">
-                                Tentukan jenis kendala agar mudah diproses.
-                            </div>
+                            @error('category') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            <div class="help-text">Tentukan jenis kendala agar mudah diproses.</div>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">
-                                Prioritas <span class="text-danger">*</span>
-                            </label>
-
-                            <select name="priority"
-                                    class="form-select @error('priority') is-invalid @enderror"
-                                    {{ !$location ? 'disabled' : '' }}>
-                                <option value="Rendah" {{ old('priority') === 'Rendah' ? 'selected' : '' }}>
-                                    Rendah
-                                </option>
-                                <option value="Sedang" {{ old('priority', 'Sedang') === 'Sedang' ? 'selected' : '' }}>
-                                    Sedang
-                                </option>
-                                <option value="Tinggi" {{ old('priority') === 'Tinggi' ? 'selected' : '' }}>
-                                    Tinggi
-                                </option>
-                                <option value="Darurat" {{ old('priority') === 'Darurat' ? 'selected' : '' }}>
-                                    Darurat
-                                </option>
+                            <label class="form-label">Prioritas <span class="text-danger">*</span></label>
+                            <select name="priority" class="form-select @error('priority') is-invalid @enderror" {{ !$location ? 'disabled' : '' }} required>
+                                <option value="Rendah" {{ old('priority') === 'Rendah' ? 'selected' : '' }}>Rendah</option>
+                                <option value="Sedang" {{ old('priority', 'Sedang') === 'Sedang' ? 'selected' : '' }}>Sedang</option>
+                                <option value="Tinggi" {{ old('priority') === 'Tinggi' ? 'selected' : '' }}>Tinggi</option>
+                                <option value="Darurat" {{ old('priority') === 'Darurat' ? 'selected' : '' }}>Darurat</option>
                             </select>
-
-                            @error('priority')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
-                            <div class="help-text">
-                                Pilih tingkat urgensi kendala.
-                            </div>
+                            @error('priority') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            <div class="help-text">Pilih tingkat urgensi kendala.</div>
                         </div>
 
                         <div class="col-md-12">
-                            <label class="form-label">
-                                Judul Kendala <span class="text-danger">*</span>
-                            </label>
-
+                            <label class="form-label">Judul Kendala <span class="text-danger">*</span></label>
                             <input
                                 type="text"
                                 name="title"
@@ -365,34 +284,22 @@
                                 class="form-control @error('title') is-invalid @enderror"
                                 placeholder="Contoh: Barrier Gate Tidak Terbuka"
                                 {{ !$location ? 'disabled' : '' }}
+                                required
                             >
-
-                            @error('title')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
-                            <div class="help-text">
-                                Buat judul singkat dan jelas.
-                            </div>
+                            @error('title') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            <div class="help-text">Buat judul singkat dan jelas.</div>
                         </div>
 
                         <div class="col-md-12">
-                            <label class="form-label">
-                                Deskripsi Kendala <span class="text-danger">*</span>
-                            </label>
-
+                            <label class="form-label">Deskripsi Kendala <span class="text-danger">*</span></label>
                             <textarea
                                 name="description"
-                                rows="6"
                                 class="form-control @error('description') is-invalid @enderror"
                                 placeholder="Jelaskan kronologi kendala, kondisi perangkat, lokasi detail, dan dampak terhadap operasional parkir..."
                                 {{ !$location ? 'disabled' : '' }}
+                                required
                             >{{ old('description') }}</textarea>
-
-                            @error('description')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
+                            @error('description') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             <div class="help-text">
                                 Contoh: Barrier gate tidak terbuka saat kendaraan keluar, menyebabkan antrean kendaraan.
                             </div>
@@ -400,20 +307,16 @@
                     </div>
                 </div>
 
-                {{-- Dokumentasi --}}
                 <div class="page-card p-4">
                     <div class="mb-4">
-                        <h5 class="section-title">Dokumentasi Kendala</h5>
-                        <p class="section-subtitle">
+                        <h5 class="section-title-local">Dokumentasi Kendala</h5>
+                        <p class="section-subtitle-local">
                             Lampirkan foto bukti agar Manajer dan Teknisi lebih mudah memahami kondisi di lapangan.
                         </p>
                     </div>
 
                     <div class="upload-box">
-                        <label class="form-label">
-                            Upload Foto Bukti
-                        </label>
-
+                        <label class="form-label">Upload Foto Bukti</label>
                         <input
                             type="file"
                             name="photo"
@@ -421,122 +324,88 @@
                             accept="image/png,image/jpeg,image/jpg"
                             {{ !$location ? 'disabled' : '' }}
                         >
+                        @error('photo') <div class="invalid-feedback">{{ $message }}</div> @enderror
 
-                        @error('photo')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-
-                        <div class="text-muted small mt-2">
-                            Format yang diperbolehkan: JPG, JPEG, PNG. Ukuran maksimal 2 MB.
+                        <div class="help-text">
+                            Format yang diperbolehkan: JPG, JPEG, PNG. Gunakan foto yang jelas jika tersedia.
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Sidebar Panduan --}}
             <div class="col-lg-4">
-                <div class="page-card p-4 mb-4">
-                    <h5 class="section-title mb-3">Panduan Pengisian</h5>
+                <div class="action-card sticky-top" style="top: 120px;">
+                    <h5 class="section-title-local">Panduan Pengisian</h5>
+                    <p class="section-subtitle-local mb-4">
+                        Pastikan laporan mudah dipahami agar proses verifikasi dan penanganan lebih cepat.
+                    </p>
 
                     <div class="note-item">
                         <div class="note-icon primary">
-                            <i class="bi bi-1-circle"></i>
+                            <i class="bi bi-card-heading"></i>
                         </div>
                         <div>
-                            <div class="fw-bold text-dark">Lokasi otomatis</div>
-                            <div class="text-muted small">
-                                Laporan akan tercatat pada lokasi operasional akun Anda.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="note-item">
-                        <div class="note-icon info">
-                            <i class="bi bi-2-circle"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold text-dark">Tulis kendala dengan jelas</div>
-                            <div class="text-muted small">
-                                Jelaskan kronologi, kondisi perangkat, dan dampak terhadap operasional.
-                            </div>
+                            <div class="fw-bold">Judul Singkat</div>
+                            <div class="small text-muted fw-semibold">Gunakan judul yang langsung menjelaskan kendala.</div>
                         </div>
                     </div>
 
                     <div class="note-item">
                         <div class="note-icon success">
-                            <i class="bi bi-3-circle"></i>
+                            <i class="bi bi-chat-left-text"></i>
                         </div>
                         <div>
-                            <div class="fw-bold text-dark">Lampirkan foto bukti</div>
-                            <div class="text-muted small">
-                                Foto membantu Manajer dan Teknisi memahami kondisi sebelum penanganan.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="page-card p-4 mb-4">
-                    <h5 class="section-title mb-3">Informasi Status</h5>
-
-                    <div class="alert alert-primary rounded-4 border-0 mb-0">
-                        Setelah laporan dikirim, status awal akan menjadi
-                        <b>Menunggu Verifikasi</b> dan Manajer Operasional akan menerima notifikasi.
-                    </div>
-                </div>
-
-                <div class="page-card p-4">
-                    <h5 class="section-title mb-3">Keterangan Prioritas</h5>
-
-                    <div class="priority-item">
-                        <span class="badge rounded-pill bg-success">Rendah</span>
-                        <div class="text-muted small mt-1">
-                            Kendala ringan dan tidak mengganggu operasional utama.
+                            <div class="fw-bold">Deskripsi Jelas</div>
+                            <div class="small text-muted fw-semibold">Tuliskan kronologi, lokasi detail, dan dampak kendala.</div>
                         </div>
                     </div>
 
-                    <div class="priority-item">
-                        <span class="badge rounded-pill bg-primary">Sedang</span>
-                        <div class="text-muted small mt-1">
-                            Kendala perlu ditangani, namun operasional masih berjalan.
+                    <div class="note-item">
+                        <div class="note-icon warning">
+                            <i class="bi bi-image"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">Foto Bukti</div>
+                            <div class="small text-muted fw-semibold">Lampirkan foto agar teknisi lebih mudah mengecek kendala.</div>
                         </div>
                     </div>
 
-                    <div class="priority-item">
-                        <span class="badge rounded-pill bg-warning text-dark">Tinggi</span>
-                        <div class="text-muted small mt-1">
-                            Kendala berdampak pada kelancaran operasional parkir.
-                        </div>
+                    <hr>
+
+                    <h5 class="section-title-local mb-3">Keterangan Prioritas</h5>
+
+                    <div class="priority-card">
+                        <span class="badge rounded-pill bg-success mb-2">Rendah</span>
+                        <div class="small fw-semibold text-muted">Tidak mengganggu operasional utama.</div>
                     </div>
 
-                    <div class="priority-item mb-0">
-                        <span class="badge rounded-pill bg-danger">Darurat</span>
-                        <div class="text-muted small mt-1">
-                            Kendala menghambat operasional dan membutuhkan penanganan segera.
-                        </div>
+                    <div class="priority-card">
+                        <span class="badge rounded-pill bg-primary mb-2">Sedang</span>
+                        <div class="small fw-semibold text-muted">Mengganggu sebagian aktivitas operasional.</div>
                     </div>
-                </div>
-            </div>
-        </div>
 
-        {{-- Tombol Aksi --}}
-        <div class="action-card mt-4">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div>
-                    <h6 class="fw-bold mb-1 text-dark">Kirim Laporan Kendala</h6>
-                    <p class="text-muted small mb-0">
-                        Pastikan seluruh data sudah benar sebelum laporan dikirim.
-                    </p>
-                </div>
+                    <div class="priority-card">
+                        <span class="badge rounded-pill bg-warning text-dark mb-2">Tinggi</span>
+                        <div class="small fw-semibold text-muted">Berdampak besar pada pelayanan parkir.</div>
+                    </div>
 
-                <div class="d-flex gap-2">
-                    <a href="{{ route('issue-reports.index') }}" class="btn btn-soft rounded-3 px-4">
-                        Batal
-                    </a>
+                    <div class="priority-card">
+                        <span class="badge rounded-pill bg-danger mb-2">Darurat</span>
+                        <div class="small fw-semibold text-muted">Harus segera ditangani karena menghambat operasional.</div>
+                    </div>
 
-                    <button type="submit" class="btn btn-primary rounded-3 px-4" {{ !$location ? 'disabled' : '' }}>
-                        <i class="bi bi-send me-1"></i>
-                        Kirim Laporan
-                    </button>
+                    <hr>
+
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('issue-reports.index') }}" class="btn btn-soft rounded-3 px-4 flex-fill">
+                            Batal
+                        </a>
+
+                        <button type="submit" class="btn btn-primary rounded-3 px-4 flex-fill" {{ !$location ? 'disabled' : '' }}>
+                            <i class="bi bi-send me-1"></i>
+                            Kirim
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

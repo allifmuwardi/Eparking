@@ -1,41 +1,48 @@
 @extends('layouts.app')
 
 @section('title', 'Edit Traffic Harian | Sistem Penanganan Kendala Parkir')
+@section('page_title', 'Edit Traffic Harian')
+@section('page_subtitle', 'Perbarui data traffic operasional parkir')
 
 @section('content')
 @php
     $authUser = Auth::user();
-    $location = $selectedLocation ?? $trafficReport->parkingLocation ?? $locations->first() ?? null;
+    $location = $selectedLocation ?? $trafficReport->parkingLocation ?? $locations->first() ?? $authUser->parkingLocation ?? null;
 
     $locationLabel = 'Belum ditentukan';
 
     if ($location) {
         $locationLabel = $location->location_name ?? '-';
 
-        if (!empty($location->area_zone)) {
-            $locationLabel .= ' - ' . $location->area_zone;
+        if (!empty($location->location_code)) {
+            $locationLabel .= ' (' . $location->location_code . ')';
         }
+    }
+
+    $reportDateValue = old('report_date');
+
+    if (!$reportDateValue) {
+        $reportDateValue = $trafficReport->report_date instanceof \Carbon\Carbon
+            ? $trafficReport->report_date->format('Y-m-d')
+            : $trafficReport->report_date;
     }
 @endphp
 
 <style>
-    .form-page-header {
-        margin-bottom: 24px;
-    }
-
     .form-page-title {
         color: #071b4d;
-        font-size: 27px;
+        font-size: 26px;
         font-weight: 950;
-        letter-spacing: -0.4px;
+        letter-spacing: -0.35px;
         margin-bottom: 6px;
     }
 
     .form-page-subtitle {
         color: #5f719a;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 650;
         margin-bottom: 0;
+        line-height: 1.55;
     }
 
     .header-icon {
@@ -52,85 +59,48 @@
         flex-shrink: 0;
     }
 
-    .section-title {
+    .section-title-local {
         color: #071b4d;
         font-size: 18px;
         font-weight: 950;
         margin-bottom: 4px;
     }
 
-    .section-subtitle {
+    .section-subtitle-local {
         color: #7b8caf;
         font-size: 13px;
-        font-weight: 600;
-        margin-bottom: 0;
-    }
-
-    .form-label {
-        color: #071b4d;
-        font-size: 14px;
-        font-weight: 850;
-        margin-bottom: 8px;
-    }
-
-    .form-control,
-    .form-select {
-        min-height: 50px;
-        border-radius: 13px;
-        border: 1px solid #d7e3f7;
-        background-color: #f8fbff;
-        color: #071b4d;
         font-weight: 650;
-    }
-
-    .form-control:focus,
-    .form-select:focus {
-        background-color: #ffffff;
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
-    }
-
-    textarea.form-control {
-        min-height: 140px;
-    }
-
-    .help-text {
-        color: #7b8caf;
-        font-size: 12px;
-        font-weight: 600;
-        margin-top: 6px;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #1f6de2, #0649bd);
-        border: none;
-        font-weight: 850;
-        box-shadow: 0 12px 22px rgba(13, 110, 253, 0.20);
-    }
-
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #0d63dd, #003f9d);
+        margin-bottom: 0;
+        line-height: 1.5;
     }
 
     .btn-soft {
         border: 1px solid #d7e3f7;
         background: #ffffff;
         color: #071b4d;
-        font-weight: 800;
+        font-weight: 850;
     }
 
     .btn-soft:hover {
         background: #f3f8ff;
         border-color: #b9cbea;
+        color: #0649bd;
+    }
+
+    .location-box,
+    .current-photo-box,
+    .action-card {
+        border-radius: 18px;
+        border: 1px solid #d7e3f7;
+        background: linear-gradient(180deg, #f8fbff, #ffffff);
+        padding: 18px;
     }
 
     .location-box {
-        border-radius: 18px;
-        border: 1px solid #b9cbea;
+        border-color: #b9cbea;
         background:
             radial-gradient(circle at top right, rgba(13, 110, 253, 0.14), transparent 38%),
             linear-gradient(180deg, #f8fbff, #ffffff);
-        padding: 18px;
     }
 
     .location-icon {
@@ -150,7 +120,7 @@
     .location-label {
         color: #7b8caf;
         font-size: 12px;
-        font-weight: 850;
+        font-weight: 900;
         text-transform: uppercase;
         letter-spacing: 0.04em;
         margin-bottom: 4px;
@@ -163,86 +133,6 @@
         margin-bottom: 3px;
     }
 
-    .metric-box {
-        border-radius: 18px;
-        border: 1px solid #d7e3f7;
-        background: linear-gradient(180deg, #f8fbff, #ffffff);
-        padding: 16px;
-        height: 100%;
-    }
-
-    .metric-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 12px;
-        font-size: 20px;
-    }
-
-    .metric-icon.primary {
-        background: #eaf3ff;
-        color: #0d6efd;
-    }
-
-    .metric-icon.success {
-        background: #e7f7ee;
-        color: #198754;
-    }
-
-    .metric-icon.warning {
-        background: #fff6dc;
-        color: #d99a00;
-    }
-
-    .metric-icon.info {
-        background: #e5f8ff;
-        color: #0bb4d8;
-    }
-
-    .note-item {
-        display: flex;
-        gap: 13px;
-        margin-bottom: 18px;
-    }
-
-    .note-item:last-child {
-        margin-bottom: 0;
-    }
-
-    .note-icon {
-        width: 38px;
-        height: 38px;
-        border-radius: 13px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        font-size: 19px;
-    }
-
-    .note-icon.primary {
-        background: #eaf3ff;
-        color: #0d6efd;
-    }
-
-    .note-icon.success {
-        background: #e7f7ee;
-        color: #198754;
-    }
-
-    .note-icon.warning {
-        background: #fff6dc;
-        color: #d99a00;
-    }
-
-    .note-icon.info {
-        background: #e5f8ff;
-        color: #0bb4d8;
-    }
-
     .upload-box {
         border-radius: 18px;
         border: 1px dashed #b9cbea;
@@ -250,12 +140,15 @@
         padding: 22px;
     }
 
-    .action-card {
-        border-radius: 20px;
-        border: 1px solid #d7e3f7;
-        background: rgba(255, 255, 255, 0.94);
-        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
-        padding: 20px;
+    .help-text {
+        color: #7b8caf;
+        font-size: 12px;
+        font-weight: 650;
+        margin-top: 6px;
+    }
+
+    textarea.form-control {
+        min-height: 132px;
     }
 
     .input-group-text {
@@ -270,13 +163,6 @@
         border-radius: 0 13px 13px 0;
     }
 
-    .current-photo-box {
-        border-radius: 18px;
-        border: 1px solid #d7e3f7;
-        background: linear-gradient(180deg, #f8fbff, #ffffff);
-        padding: 16px;
-    }
-
     .current-photo-box img {
         max-height: 320px;
         object-fit: cover;
@@ -284,48 +170,34 @@
         border: 1px solid #d7e3f7;
     }
 
-    .summary-box {
-        border-radius: 18px;
-        border: 1px solid #d7e3f7;
-        background: #ffffff;
-        padding: 16px;
-        text-align: center;
-        height: 100%;
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 12px 0;
+        border-bottom: 1px solid #edf3fc;
+    }
+
+    .summary-row:last-child {
+        border-bottom: none;
     }
 
     .summary-label {
         color: #7b8caf;
-        font-size: 12px;
-        font-weight: 850;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        margin-bottom: 7px;
+        font-size: 13px;
+        font-weight: 750;
     }
 
     .summary-value {
         color: #071b4d;
-        font-size: 21px;
+        font-size: 13px;
         font-weight: 950;
-        margin-bottom: 0;
-    }
-
-    .data-table th {
-        color: #7b8caf;
-        font-size: 13px;
-        font-weight: 850;
-        padding-left: 0;
-    }
-
-    .data-table td {
-        color: #071b4d;
-        font-size: 13px;
-        font-weight: 750;
+        text-align: right;
     }
 </style>
 
-<div class="container-fluid">
-    {{-- Header --}}
-    <div class="form-page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
         <div class="d-flex align-items-center gap-3">
             <div class="header-icon">
                 <i class="bi bi-pencil-square"></i>
@@ -334,7 +206,7 @@
             <div>
                 <h3 class="form-page-title">Edit Traffic Harian</h3>
                 <p class="form-page-subtitle">
-                    Perbarui data traffic operasional parkir harian jika terdapat kesalahan input.
+                    Perbarui data traffic operasional parkir jika terdapat kesalahan input.
                 </p>
             </div>
         </div>
@@ -361,18 +233,15 @@
         @endif
 
         <div class="row g-4">
-            {{-- Form Utama --}}
             <div class="col-lg-8">
-                {{-- Informasi Laporan --}}
                 <div class="page-card p-4 mb-4">
                     <div class="mb-4">
-                        <h5 class="section-title">Informasi Laporan Traffic</h5>
-                        <p class="section-subtitle">
-                            Lokasi traffic tetap mengikuti lokasi operasional akun Petugas.
+                        <h5 class="section-title-local">Informasi Laporan Traffic</h5>
+                        <p class="section-subtitle-local">
+                            Lokasi laporan mengikuti lokasi operasional akun Petugas.
                         </p>
                     </div>
 
-                    {{-- Lokasi Otomatis --}}
                     <div class="location-box mb-4">
                         <div class="d-flex align-items-start gap-3">
                             <div class="location-icon">
@@ -382,473 +251,174 @@
                             <div>
                                 <div class="location-label">Lokasi Operasional</div>
                                 <div class="location-value">{{ $locationLabel }}</div>
-                                <div class="text-muted small">
-                                    Lokasi tidak dapat diubah dari form edit. Jika lokasi akun salah, Admin Operasional perlu memperbarui akun pengguna.
+                                <div class="text-muted small fw-semibold">
+                                    Data traffic akan tetap tersimpan pada lokasi operasional ini.
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     @if (!$location)
-                        <div class="alert alert-danger rounded-4 border-0">
-                            <div class="fw-bold mb-1">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                                Lokasi Operasional Belum Ditentukan
-                            </div>
-                            Akun Anda belum memiliki lokasi operasional aktif. Silakan hubungi Admin Operasional.
+                        <div class="alert alert-danger">
+                            Lokasi operasional akun Anda belum ditentukan. Silakan hubungi Admin Operasional.
                         </div>
                     @endif
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">
-                                Tanggal Laporan <span class="text-danger">*</span>
-                            </label>
-
-                            <input
-                                type="date"
-                                name="report_date"
-                                value="{{ old('report_date', $trafficReport->report_date?->format('Y-m-d')) }}"
-                                class="form-control @error('report_date') is-invalid @enderror"
-                                {{ !$location ? 'disabled' : '' }}
-                            >
-
-                            @error('report_date')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
-                            <div class="help-text">
-                                Tanggal operasional traffic.
-                            </div>
+                            <label class="form-label">Tanggal Laporan <span class="text-danger">*</span></label>
+                            <input type="date" name="report_date" value="{{ $reportDateValue }}" class="form-control @error('report_date') is-invalid @enderror" required>
+                            @error('report_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">
-                                Shift <span class="text-danger">*</span>
-                            </label>
-
-                            <select
-                                name="shift"
-                                class="form-select @error('shift') is-invalid @enderror"
-                                {{ !$location ? 'disabled' : '' }}
-                            >
-                                <option value="Pagi" {{ old('shift', $trafficReport->shift) === 'Pagi' ? 'selected' : '' }}>
-                                    Pagi
-                                </option>
-                                <option value="Siang" {{ old('shift', $trafficReport->shift) === 'Siang' ? 'selected' : '' }}>
-                                    Siang
-                                </option>
-                                <option value="Malam" {{ old('shift', $trafficReport->shift) === 'Malam' ? 'selected' : '' }}>
-                                    Malam
-                                </option>
+                            <label class="form-label">Shift <span class="text-danger">*</span></label>
+                            <select name="shift" class="form-select @error('shift') is-invalid @enderror" required>
+                                <option value="">Pilih Shift</option>
+                                <option value="Pagi" {{ old('shift', $trafficReport->shift) === 'Pagi' ? 'selected' : '' }}>Pagi</option>
+                                <option value="Siang" {{ old('shift', $trafficReport->shift) === 'Siang' ? 'selected' : '' }}>Siang</option>
+                                <option value="Malam" {{ old('shift', $trafficReport->shift) === 'Malam' ? 'selected' : '' }}>Malam</option>
                             </select>
-
-                            @error('shift')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
-                            <div class="help-text">
-                                Shift petugas saat laporan dibuat.
-                            </div>
+                            @error('shift') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
                 </div>
 
-                {{-- Data Traffic --}}
                 <div class="page-card p-4 mb-4">
                     <div class="mb-4">
-                        <h5 class="section-title">Data Traffic Kendaraan</h5>
-                        <p class="section-subtitle">
-                            Perbarui jumlah kendaraan masuk, keluar, transaksi, dan kategori kendaraan.
-                        </p>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="metric-box">
-                                <div class="metric-icon primary">
-                                    <i class="bi bi-box-arrow-in-right"></i>
-                                </div>
-
-                                <label class="form-label">
-                                    Kendaraan Masuk <span class="text-danger">*</span>
-                                </label>
-
-                                <input
-                                    type="number"
-                                    name="total_vehicle_in"
-                                    value="{{ old('total_vehicle_in', $trafficReport->total_vehicle_in) }}"
-                                    class="form-control @error('total_vehicle_in') is-invalid @enderror"
-                                    min="0"
-                                    {{ !$location ? 'disabled' : '' }}
-                                >
-
-                                @error('total_vehicle_in')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-
-                                <div class="help-text">Total kendaraan masuk.</div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="metric-box">
-                                <div class="metric-icon success">
-                                    <i class="bi bi-box-arrow-right"></i>
-                                </div>
-
-                                <label class="form-label">
-                                    Kendaraan Keluar <span class="text-danger">*</span>
-                                </label>
-
-                                <input
-                                    type="number"
-                                    name="total_vehicle_out"
-                                    value="{{ old('total_vehicle_out', $trafficReport->total_vehicle_out) }}"
-                                    class="form-control @error('total_vehicle_out') is-invalid @enderror"
-                                    min="0"
-                                    {{ !$location ? 'disabled' : '' }}
-                                >
-
-                                @error('total_vehicle_out')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-
-                                <div class="help-text">Total kendaraan keluar.</div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="metric-box">
-                                <div class="metric-icon warning">
-                                    <i class="bi bi-receipt"></i>
-                                </div>
-
-                                <label class="form-label">
-                                    Total Transaksi <span class="text-danger">*</span>
-                                </label>
-
-                                <input
-                                    type="number"
-                                    name="total_transaction"
-                                    value="{{ old('total_transaction', $trafficReport->total_transaction) }}"
-                                    class="form-control @error('total_transaction') is-invalid @enderror"
-                                    min="0"
-                                    {{ !$location ? 'disabled' : '' }}
-                                >
-
-                                @error('total_transaction')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-
-                                <div class="help-text">Jumlah transaksi parkir.</div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">
-                                Jumlah Mobil <span class="text-danger">*</span>
-                            </label>
-
-                            <input
-                                type="number"
-                                name="car_count"
-                                value="{{ old('car_count', $trafficReport->car_count) }}"
-                                class="form-control @error('car_count') is-invalid @enderror"
-                                min="0"
-                                {{ !$location ? 'disabled' : '' }}
-                            >
-
-                            @error('car_count')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
-                            <div class="help-text">Jumlah kendaraan roda empat.</div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">
-                                Jumlah Motor <span class="text-danger">*</span>
-                            </label>
-
-                            <input
-                                type="number"
-                                name="motorcycle_count"
-                                value="{{ old('motorcycle_count', $trafficReport->motorcycle_count) }}"
-                                class="form-control @error('motorcycle_count') is-invalid @enderror"
-                                min="0"
-                                {{ !$location ? 'disabled' : '' }}
-                            >
-
-                            @error('motorcycle_count')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
-                            <div class="help-text">Jumlah kendaraan roda dua.</div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">
-                                Kendaraan Lain <span class="text-danger">*</span>
-                            </label>
-
-                            <input
-                                type="number"
-                                name="other_vehicle_count"
-                                value="{{ old('other_vehicle_count', $trafficReport->other_vehicle_count) }}"
-                                class="form-control @error('other_vehicle_count') is-invalid @enderror"
-                                min="0"
-                                {{ !$location ? 'disabled' : '' }}
-                            >
-
-                            @error('other_vehicle_count')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
-                            <div class="help-text">Bus, truk, atau kategori lainnya.</div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Pendapatan dan Dokumentasi --}}
-                <div class="page-card p-4">
-                    <div class="mb-4">
-                        <h5 class="section-title">Pendapatan dan Dokumentasi</h5>
-                        <p class="section-subtitle">
-                            Perbarui total pendapatan, dokumentasi, dan catatan operasional.
+                        <h5 class="section-title-local">Data Kendaraan</h5>
+                        <p class="section-subtitle-local">
+                            Perbarui jumlah kendaraan masuk, keluar, dan rincian kategori kendaraan.
                         </p>
                     </div>
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">
-                                Total Pendapatan <span class="text-danger">*</span>
-                            </label>
+                            <label class="form-label">Total Kendaraan Masuk <span class="text-danger">*</span></label>
+                            <input type="number" min="0" name="total_vehicle_in" value="{{ old('total_vehicle_in', $trafficReport->total_vehicle_in ?? 0) }}" class="form-control @error('total_vehicle_in') is-invalid @enderror" required>
+                            @error('total_vehicle_in') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
 
+                        <div class="col-md-6">
+                            <label class="form-label">Total Kendaraan Keluar <span class="text-danger">*</span></label>
+                            <input type="number" min="0" name="total_vehicle_out" value="{{ old('total_vehicle_out', $trafficReport->total_vehicle_out ?? 0) }}" class="form-control @error('total_vehicle_out') is-invalid @enderror" required>
+                            @error('total_vehicle_out') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Mobil</label>
+                            <input type="number" min="0" name="car_count" value="{{ old('car_count', $trafficReport->car_count ?? 0) }}" class="form-control @error('car_count') is-invalid @enderror">
+                            @error('car_count') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Motor</label>
+                            <input type="number" min="0" name="motorcycle_count" value="{{ old('motorcycle_count', $trafficReport->motorcycle_count ?? 0) }}" class="form-control @error('motorcycle_count') is-invalid @enderror">
+                            @error('motorcycle_count') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Kendaraan Lainnya</label>
+                            <input type="number" min="0" name="other_vehicle_count" value="{{ old('other_vehicle_count', $trafficReport->other_vehicle_count ?? 0) }}" class="form-control @error('other_vehicle_count') is-invalid @enderror">
+                            @error('other_vehicle_count') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page-card p-4 mb-4">
+                    <div class="mb-4">
+                        <h5 class="section-title-local">Transaksi dan Pendapatan</h5>
+                        <p class="section-subtitle-local">
+                            Perbarui jumlah transaksi dan total pendapatan parkir.
+                        </p>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Total Transaksi <span class="text-danger">*</span></label>
+                            <input type="number" min="0" name="total_transaction" value="{{ old('total_transaction', $trafficReport->total_transaction ?? 0) }}" class="form-control @error('total_transaction') is-invalid @enderror" required>
+                            @error('total_transaction') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Total Pendapatan <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">Rp</span>
-
-                                <input
-                                    type="number"
-                                    name="total_revenue"
-                                    value="{{ old('total_revenue', $trafficReport->total_revenue) }}"
-                                    class="form-control @error('total_revenue') is-invalid @enderror"
-                                    min="0"
-                                    step="100"
-                                    {{ !$location ? 'disabled' : '' }}
-                                >
-
-                                @error('total_revenue')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <input type="number" min="0" name="total_revenue" value="{{ old('total_revenue', $trafficReport->total_revenue ?? 0) }}" class="form-control @error('total_revenue') is-invalid @enderror" required>
                             </div>
-
-                            <div class="help-text">
-                                Isi angka saja. Contoh: 1500000.
-                            </div>
+                            @error('total_revenue') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                         </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Ganti Foto Dokumentasi</label>
-
-                            <div class="upload-box">
-                                <input
-                                    type="file"
-                                    name="photo"
-                                    class="form-control @error('photo') is-invalid @enderror"
-                                    accept="image/png,image/jpeg,image/jpg"
-                                    {{ !$location ? 'disabled' : '' }}
-                                >
-
-                                @error('photo')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-
-                                @if ($trafficReport->photo)
-                                    <div class="text-muted small mt-2">
-                                        Foto sebelumnya sudah tersedia. Upload foto baru hanya jika ingin mengganti dokumentasi.
-                                    </div>
-                                @else
-                                    <div class="text-muted small mt-2">
-                                        Belum ada foto dokumentasi.
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-
-                        @if ($trafficReport->photo)
-                            <div class="col-md-12">
-                                <div class="current-photo-box">
-                                    <div class="text-muted small fw-bold mb-2">Foto Dokumentasi Saat Ini</div>
-                                    <a href="{{ asset('storage/' . $trafficReport->photo) }}" target="_blank">
-                                        <img
-                                            src="{{ asset('storage/' . $trafficReport->photo) }}"
-                                            alt="Foto Traffic Harian"
-                                            class="img-fluid"
-                                        >
-                                    </a>
-                                </div>
-                            </div>
-                        @endif
-
-                        <div class="col-md-12">
-                            <label class="form-label">Catatan Operasional</label>
-
-                            <textarea
-                                name="notes"
-                                rows="5"
-                                class="form-control @error('notes') is-invalid @enderror"
-                                placeholder="Masukkan catatan kondisi traffic, kendala antrean, cuaca, kepadatan kendaraan, atau kondisi operasional lainnya..."
-                                {{ !$location ? 'disabled' : '' }}
-                            >{{ old('notes', $trafficReport->notes) }}</textarea>
-
-                            @error('notes')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Sidebar --}}
-            <div class="col-lg-4">
-                <div class="page-card p-4 mb-4">
-                    <h5 class="section-title mb-3">Informasi Data</h5>
-
-                    <table class="table table-borderless align-middle mb-0 data-table">
-                        <tr>
-                            <th class="ps-0">Petugas</th>
-                            <td class="text-end">
-                                {{ $trafficReport->user->full_name ?? $trafficReport->user->name ?? '-' }}
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th class="ps-0">Lokasi</th>
-                            <td class="text-end">
-                                {{ $locationLabel }}
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th class="ps-0">Dibuat Pada</th>
-                            <td class="text-end">
-                                {{ $trafficReport->created_at?->format('d M Y H:i') ?? '-' }}
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th class="ps-0">Diperbarui</th>
-                            <td class="text-end">
-                                {{ $trafficReport->updated_at?->format('d M Y H:i') ?? '-' }}
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-
-                <div class="page-card p-4 mb-4">
-                    <h5 class="section-title mb-3">Ringkasan Saat Ini</h5>
-
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="summary-box">
-                                <div class="summary-label">Masuk</div>
-                                <div class="summary-value text-primary">
-                                    {{ number_format($trafficReport->total_vehicle_in ?? 0) }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-6">
-                            <div class="summary-box">
-                                <div class="summary-label">Keluar</div>
-                                <div class="summary-value text-primary">
-                                    {{ number_format($trafficReport->total_vehicle_out ?? 0) }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="summary-box" style="background:#e7f7ee;">
-                                <div class="summary-label">Pendapatan</div>
-                                <div class="summary-value text-success">
-                                    Rp {{ number_format($trafficReport->total_revenue ?? 0, 0, ',', '.') }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="page-card p-4 mb-4">
-                    <h5 class="section-title mb-3">Catatan Edit</h5>
-
-                    <div class="alert alert-warning rounded-4 border-0 mb-0">
-                        Pastikan perubahan data traffic sesuai dengan kondisi operasional sebenarnya.
-                        Data ini akan masuk ke laporan rekap dan export Excel.
                     </div>
                 </div>
 
                 <div class="page-card p-4">
-                    <h5 class="section-title mb-3">Aturan Edit</h5>
+                    <div class="mb-4">
+                        <h5 class="section-title-local">Dokumentasi dan Catatan</h5>
+                        <p class="section-subtitle-local">
+                            Perbarui foto atau catatan tambahan jika diperlukan.
+                        </p>
+                    </div>
 
-                    <div class="note-item">
-                        <div class="note-icon primary">
-                            <i class="bi bi-geo-alt"></i>
+                    @if (!empty($trafficReport->photo))
+                        <div class="current-photo-box mb-3">
+                            <div class="fw-bold mb-2">Foto Saat Ini</div>
+                            <img src="{{ asset('storage/' . $trafficReport->photo) }}" alt="Foto Traffic" class="w-100">
                         </div>
-                        <div>
-                            <div class="fw-bold text-dark">Lokasi Dikunci</div>
-                            <div class="text-muted small">
-                                Lokasi mengikuti akun Petugas dan tidak dapat diganti bebas.
+                    @endif
+
+                    <div class="mb-3">
+                        <label class="form-label">Ganti Foto Dokumentasi</label>
+                        <div class="upload-box">
+                            <input type="file" name="photo" class="form-control @error('photo') is-invalid @enderror" accept="image/*">
+                            <div class="help-text">
+                                Kosongkan jika tidak ingin mengganti foto.
                             </div>
+                            @error('photo') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                         </div>
                     </div>
 
-                    <div class="note-item">
-                        <div class="note-icon success">
-                            <i class="bi bi-person-check"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold text-dark">Hanya Pembuat</div>
-                            <div class="text-muted small">
-                                Walaupun history terlihat untuk satu lokasi, edit hanya boleh dilakukan oleh pembuat laporan.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="note-item">
-                        <div class="note-icon warning">
-                            <i class="bi bi-exclamation-triangle"></i>
-                        </div>
-                        <div>
-                            <div class="fw-bold text-dark">Anti Duplikasi</div>
-                            <div class="text-muted small">
-                                Sistem menolak traffic ganda pada lokasi, tanggal, dan shift yang sama.
-                            </div>
-                        </div>
+                    <div>
+                        <label class="form-label">Catatan</label>
+                        <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" placeholder="Tulis catatan tambahan jika ada...">{{ old('notes', $trafficReport->notes) }}</textarea>
+                        @error('notes') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                 </div>
             </div>
-        </div>
 
-        {{-- Tombol Aksi --}}
-        <div class="action-card mt-4">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div>
-                    <h6 class="fw-bold mb-1 text-dark">Update Traffic Harian</h6>
-                    <p class="text-muted small mb-0">
-                        Simpan perubahan jika seluruh data sudah sesuai.
+            <div class="col-lg-4">
+                <div class="action-card sticky-top" style="top: 120px;">
+                    <h5 class="section-title-local">Ringkasan Data</h5>
+                    <p class="section-subtitle-local mb-3">
+                        Data sebelum atau sesudah perubahan akan tersimpan setelah tombol update ditekan.
                     </p>
-                </div>
 
-                <div class="d-flex gap-2">
-                    <a href="{{ route('traffic-reports.index') }}" class="btn btn-soft rounded-3 px-4">
-                        Batal
-                    </a>
+                    <div class="summary-row">
+                        <div class="summary-label">Pembuat</div>
+                        <div class="summary-value">{{ $trafficReport->user->full_name ?? $trafficReport->user->name ?? '-' }}</div>
+                    </div>
 
-                    <button type="submit" class="btn btn-primary rounded-3 px-4" {{ !$location ? 'disabled' : '' }}>
-                        <i class="bi bi-save me-1"></i>
-                        Update Traffic
-                    </button>
+                    <div class="summary-row">
+                        <div class="summary-label">Dibuat</div>
+                        <div class="summary-value">{{ $trafficReport->created_at?->format('d M Y H:i') ?? '-' }} WIB</div>
+                    </div>
+
+                    <div class="summary-row">
+                        <div class="summary-label">Terakhir Update</div>
+                        <div class="summary-value">{{ $trafficReport->updated_at?->format('d M Y H:i') ?? '-' }} WIB</div>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('traffic-reports.index') }}" class="btn btn-soft rounded-3 px-4 flex-fill">
+                            Batal
+                        </a>
+
+                        <button type="submit" class="btn btn-primary rounded-3 px-4 flex-fill" {{ !$location ? 'disabled' : '' }}>
+                            <i class="bi bi-save me-1"></i>
+                            Update
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
