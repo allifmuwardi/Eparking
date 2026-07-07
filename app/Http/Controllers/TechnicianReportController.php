@@ -89,7 +89,7 @@ class TechnicianReportController extends Controller
         $validated = $request->validate([
             'new_status' => 'required|in:Dalam Proses,Menunggu Informasi,Selesai Ditangani',
             'follow_up_note' => 'required|string',
-            'documentation_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'documentation_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
             'need_backup_item' => 'nullable|boolean',
             'backup_item_id' => 'nullable|exists:backup_items,id',
             'backup_item_quantity' => 'nullable|integer|min:1',
@@ -100,7 +100,7 @@ class TechnicianReportController extends Controller
             'follow_up_note.required' => 'Catatan hasil penanganan wajib diisi.',
             'documentation_photo.image' => 'File dokumentasi harus berupa gambar.',
             'documentation_photo.mimes' => 'Foto harus berformat JPG, JPEG, atau PNG.',
-            'documentation_photo.max' => 'Ukuran foto maksimal 2 MB.',
+            'documentation_photo.max' => 'Ukuran foto maksimal 10 MB.',
             'backup_item_id.exists' => 'Barang backup tidak valid.',
             'backup_item_quantity.integer' => 'Jumlah barang backup harus berupa angka.',
             'backup_item_quantity.min' => 'Jumlah barang backup minimal 1.',

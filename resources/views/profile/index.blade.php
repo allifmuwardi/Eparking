@@ -28,8 +28,25 @@
         default => 'bg-secondary',
     };
 
+    $canEditIdentity = in_array($user->role ?? '', ['admin', 'manajer'], true);
+
     $displayName = $user->full_name ?? $user->name ?? 'User';
     $initial = strtoupper(substr($displayName, 0, 1));
+
+    $profilePhoto = $user->profile_photo ?? null;
+    $profilePhotoUrl = null;
+
+    if (!empty($profilePhoto)) {
+        $cacheVersion = optional($user->updated_at)->timestamp ?? time();
+
+        if (\Illuminate\Support\Str::startsWith($profilePhoto, ['http://', 'https://'])) {
+            $profilePhotoUrl = $profilePhoto . '?v=' . $cacheVersion;
+        } elseif (\Illuminate\Support\Str::startsWith($profilePhoto, 'storage/')) {
+            $profilePhotoUrl = asset($profilePhoto) . '?v=' . $cacheVersion;
+        } else {
+            $profilePhotoUrl = asset('storage/' . ltrim($profilePhoto, '/')) . '?v=' . $cacheVersion;
+        }
+    }
 
     $locationLabel = $user->operational_location_label ?? null;
 
@@ -221,6 +238,24 @@
         font-weight: 650;
         margin-top: 6px;
         display: block;
+    }
+
+    .locked-field {
+        background: #f4f8ff !important;
+        color: #53627f !important;
+        border-color: #d7e3f7 !important;
+        cursor: not-allowed;
+    }
+
+    .identity-lock-notice {
+        border-radius: 16px;
+        border: 1px solid #d7e3f7;
+        background: linear-gradient(180deg, #f8fbff, #ffffff);
+        color: #53627f;
+        padding: 13px 15px;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.5;
     }
 
     .info-box {
@@ -442,8 +477,8 @@
                 <div class="col-lg-8">
                     <div class="d-flex gap-3 align-items-start">
                         <div class="profile-avatar-lg">
-                            @if ($user->profile_photo)
-                                <img src="{{ asset('storage/' . $user->profile_photo) }}" alt="Foto Profil">
+                            @if ($profilePhotoUrl)
+                                <img src="{{ $profilePhotoUrl }}" alt="Foto Profil" class="js-profile-photo-preview">
                             @else
                                 {{ $initial }}
                             @endif
@@ -489,8 +524,8 @@
         <div class="col-lg-4">
             <div class="profile-photo-card mb-4 text-center">
                 <div class="profile-photo-preview">
-                    @if ($user->profile_photo)
-                        <img src="{{ asset('storage/' . $user->profile_photo) }}" alt="Foto Profil">
+                    @if ($profilePhotoUrl)
+                        <img src="{{ $profilePhotoUrl }}" alt="Foto Profil" class="js-profile-photo-preview">
                     @else
                         {{ $initial }}
                     @endif
@@ -622,7 +657,7 @@
                 <div class="mb-4">
                     <h5 class="section-title-local">Update Profil</h5>
                     <p class="section-subtitle-local">
-                        Perbarui nama, email, nomor telepon, dan foto profil Anda.
+                        Perbarui data kontak, foto profil, dan informasi akun sesuai hak akses role Anda.
                     </p>
                 </div>
 
@@ -631,6 +666,16 @@
                     @method('PUT')
 
                     <div class="row g-3">
+                        @unless ($canEditIdentity)
+                            <div class="col-12">
+                                <div class="identity-lock-notice">
+                                    <i class="bi bi-shield-lock me-1"></i>
+                                    Nama lengkap dan NIK login tidak dapat diubah sendiri untuk role {{ $roleLabel }}.
+                                    Perubahan data identitas dilakukan oleh Admin Operasional melalui menu User Management.
+                                </div>
+                            </div>
+                        @endunless
+
                         <div class="col-md-6">
                             <label class="form-label">
                                 Nama Lengkap <span class="text-danger">*</span>
@@ -640,9 +685,10 @@
                                 type="text"
                                 name="full_name"
                                 value="{{ old('full_name', $user->full_name ?? $user->name) }}"
-                                class="form-control @error('full_name') is-invalid @enderror"
+                                class="form-control {{ !$canEditIdentity ? 'locked-field' : '' }} @error('full_name') is-invalid @enderror"
                                 placeholder="Masukkan nama lengkap"
                                 required
+                                @readonly(!$canEditIdentity)
                             >
 
                             @error('full_name')
@@ -650,22 +696,39 @@
                             @enderror
 
                             <span class="field-helper">
-                                Nama akan tampil pada dashboard dan riwayat aktivitas.
+                                @if ($canEditIdentity)
+                                    Nama akan tampil pada dashboard dan riwayat aktivitas.
+                                @else
+                                    Nama Petugas/Teknisi hanya dapat diubah oleh Admin Operasional melalui User Management.
+                                @endif
                             </span>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">NIK</label>
+                            <label class="form-label">
+                                NIK Login <span class="text-danger">*</span>
+                            </label>
 
                             <input
                                 type="text"
-                                value="{{ $user->username ?? '-' }}"
-                                class="form-control"
-                                readonly
+                                name="username"
+                                value="{{ old('username', $user->username) }}"
+                                class="form-control {{ !$canEditIdentity ? 'locked-field' : '' }} @error('username') is-invalid @enderror"
+                                placeholder="Masukkan NIK login"
+                                required
+                                @readonly(!$canEditIdentity)
                             >
 
+                            @error('username')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+
                             <span class="field-helper">
-                                NIK hanya dapat diubah oleh Admin Operasional.
+                                @if ($canEditIdentity)
+                                    NIK digunakan sebagai username login. Pastikan tidak sama dengan akun lain.
+                                @else
+                                    NIK login Petugas/Teknisi hanya dapat diubah oleh Admin Operasional.
+                                @endif
                             </span>
                         </div>
 
@@ -715,6 +778,7 @@
                             <input
                                 type="file"
                                 name="profile_photo"
+                                id="profilePhotoInput"
                                 class="form-control @error('profile_photo') is-invalid @enderror"
                                 accept="image/png,image/jpeg,image/jpg"
                             >
@@ -724,7 +788,7 @@
                             @enderror
 
                             <span class="field-helper">
-                                Format JPG, JPEG, atau PNG. Maksimal 2 MB.
+                                Format JPG, JPEG, atau PNG. Maksimal 5 MB.
                             </span>
                         </div>
 
@@ -875,4 +939,36 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const profilePhotoInput = document.getElementById('profilePhotoInput');
+        const previewImages = document.querySelectorAll('.js-profile-photo-preview');
+
+        if (!profilePhotoInput || previewImages.length === 0) {
+            return;
+        }
+
+        profilePhotoInput.addEventListener('change', function () {
+            const file = this.files && this.files[0] ? this.files[0] : null;
+
+            if (!file) {
+                return;
+            }
+
+            if (!file.type.startsWith('image/')) {
+                return;
+            }
+
+            const previewUrl = URL.createObjectURL(file);
+
+            previewImages.forEach(function (image) {
+                image.src = previewUrl;
+            });
+        });
+    });
+</script>
+@endpush
+
 @endsection

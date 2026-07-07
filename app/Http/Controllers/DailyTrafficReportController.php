@@ -120,7 +120,7 @@ class DailyTrafficReportController extends Controller
             'total_transaction' => 'required|integer|min:0',
             'total_revenue' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
         ], [
             'report_date.required' => 'Tanggal laporan wajib diisi.',
             'report_date.date' => 'Tanggal laporan tidak valid.',
@@ -149,7 +149,7 @@ class DailyTrafficReportController extends Controller
             'total_revenue.min' => 'Total pendapatan tidak boleh kurang dari 0.',
             'photo.image' => 'File dokumentasi harus berupa gambar.',
             'photo.mimes' => 'Foto harus berformat JPG, JPEG, atau PNG.',
-            'photo.max' => 'Ukuran foto maksimal 2 MB.',
+            'photo.max' => 'Ukuran foto maksimal 10 MB.',
         ]);
 
         $exists = DailyTrafficReport::where('parking_location_id', $user->parking_location_id)
@@ -298,7 +298,7 @@ class DailyTrafficReportController extends Controller
             'total_transaction' => 'required|integer|min:0',
             'total_revenue' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
         ]);
 
         $exists = DailyTrafficReport::where('parking_location_id', $user->parking_location_id)

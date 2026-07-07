@@ -122,7 +122,7 @@ class IssueReportController extends Controller
             'category' => 'required|string|max:100',
             'priority' => 'required|in:Rendah,Sedang,Tinggi,Darurat',
             'description' => 'required|string',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
         ], [
             'title.required' => 'Judul kendala wajib diisi.',
             'category.required' => 'Kategori kendala wajib dipilih.',
@@ -131,7 +131,7 @@ class IssueReportController extends Controller
             'description.required' => 'Deskripsi kendala wajib diisi.',
             'photo.image' => 'File harus berupa gambar.',
             'photo.mimes' => 'Foto harus berformat JPG, JPEG, atau PNG.',
-            'photo.max' => 'Ukuran foto maksimal 2 MB.',
+            'photo.max' => 'Ukuran foto maksimal 10 MB.',
         ]);
 
         $photoPath = null;

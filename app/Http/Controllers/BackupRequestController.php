@@ -520,11 +520,11 @@ class BackupRequestController extends Controller
         }
 
         $validated = $request->validate([
-            'handover_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'handover_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240',
         ], [
             'handover_photo.image' => 'File bukti penyerahan harus berupa gambar.',
             'handover_photo.mimes' => 'Foto harus berformat JPG, JPEG, atau PNG.',
-            'handover_photo.max' => 'Ukuran foto maksimal 2 MB.',
+            'handover_photo.max' => 'Ukuran foto maksimal 10 MB.',
         ]);
 
         $photoPath = $backupRequest->handover_photo;

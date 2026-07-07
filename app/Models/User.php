@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -151,12 +152,29 @@ class User extends Authenticatable
         }
 
         $locationName = $this->parkingLocation->location_name ?? '-';
-        $areaZone = $this->parkingLocation->area_zone ?? null;
+        $locationCode = $this->parkingLocation->location_code ?? null;
 
-        if ($areaZone) {
-            return $locationName . ' - ' . $areaZone;
+        if ($locationCode) {
+            return $locationName . ' (' . $locationCode . ')';
         }
 
         return $locationName;
+    }
+
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        if (empty($this->profile_photo)) {
+            return null;
+        }
+
+        if (Str::startsWith($this->profile_photo, ['http://', 'https://'])) {
+            return $this->profile_photo;
+        }
+
+        if (Str::startsWith($this->profile_photo, 'storage/')) {
+            return asset($this->profile_photo);
+        }
+
+        return asset('storage/' . $this->profile_photo);
     }
 }
