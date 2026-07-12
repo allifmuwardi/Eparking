@@ -951,15 +951,43 @@
         }
 
         .cs-ai-bubble {
-            max-width: 86%;
+            max-width: 88%;
             border-radius: 18px;
-            padding: 11px 13px;
+            padding: 12px 14px;
             font-size: 13px;
             font-weight: 650;
-            line-height: 1.54;
-            white-space: pre-wrap;
+            line-height: 1.58;
+            white-space: normal;
             word-break: break-word;
             position: relative;
+        }
+
+        .cs-ai-content {
+            display: block;
+        }
+
+        .cs-ai-content p {
+            margin: 0 0 9px;
+        }
+
+        .cs-ai-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .cs-ai-content .cs-ai-line {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .cs-ai-content .cs-ai-section-title {
+            display: block;
+            color: var(--ep-primary-dark);
+            font-weight: 950;
+            margin: 10px 0 6px;
+        }
+
+        .cs-ai-message.user .cs-ai-content .cs-ai-section-title {
+            color: #ffffff;
         }
 
         .cs-ai-message.ai .cs-ai-bubble {
@@ -1656,7 +1684,7 @@
     <div class="cs-ai-floating">
         <button type="button" class="cs-ai-button" id="csAiToggleButton" aria-label="Buka CS ELITE Parkir">
             <i class="bi bi-headset"></i>
-            <span>CS Online</span>
+            <span>CS by AI</span>
         </button>
     </div>
 
@@ -1671,7 +1699,7 @@
                     <p class="cs-ai-title">CS ELITE Parkir</p>
                     <div class="cs-ai-status">
                         <span class="cs-ai-status-dot"></span>
-                        <span>Online • Siap membantu</span>
+                        <span>Online • Siap memberi arahan operasional</span>
                     </div>
                 </div>
             </div>
@@ -1694,40 +1722,40 @@
         <div class="cs-ai-body" id="csAiMessages">
             <div class="cs-ai-message ai">
                 <div class="cs-ai-bubble">
-Halo {{ $firstName }}, saya CS ELITE Parkir. Silakan tanyakan panduan penggunaan sistem, contoh pengisian laporan, kendala lapangan, status laporan, atau bantuan sesuai role Anda.
+Halo {{ $firstName }}, saya CS by AI ELITE Parkir. Saya siap membantu menjelaskan tindakan saat terjadi kendala di area parkir, cara membuat laporan, data yang perlu diisi, alur penanganan, dan panduan penggunaan sistem sesuai role Anda.
                     <span class="cs-ai-meta">CS ELITE Parkir • siap membantu</span>
                 </div>
             </div>
 
             <div class="cs-ai-quick" id="csAiQuickQuestions">
                 @if ($role === 'petugas')
-                    <button type="button" class="cs-ai-chip" data-question="Bagaimana cara membuat laporan kendala parkir?">Buat laporan kendala</button>
-                    <button type="button" class="cs-ai-chip" data-question="Buatkan contoh deskripsi laporan untuk gate keluar tidak terbuka.">Template deskripsi</button>
-                    <button type="button" class="cs-ai-chip" data-question="Kalau printer tiket error dan antrean panjang, apa yang harus saya lakukan di lapangan dan di sistem?">Panduan kendala lapangan</button>
-                    <button type="button" class="cs-ai-chip" data-question="Apa arti status Menunggu Verifikasi, Dalam Proses, dan Ditutup?">Arti status laporan</button>
-                    <button type="button" class="cs-ai-chip" data-question="Bagaimana cara membuat permintaan barang backup?">Request backup</button>
-                    <button type="button" class="cs-ai-chip" data-question="Kenapa foto bukti laporan tidak bisa diupload?">Masalah upload foto</button>
+                    <button type="button" class="cs-ai-chip" data-question="Ada kendala di area parkir, apa yang harus saya lakukan dari tindakan lapangan sampai membuat laporan?">Alur saat kendala</button>
+                    <button type="button" class="cs-ai-chip" data-question="Buatkan contoh deskripsi laporan untuk gate keluar tidak terbuka dan kendaraan mulai antre.">Template deskripsi</button>
+                    <button type="button" class="cs-ai-chip" data-question="Jika printer tiket error dan antrean panjang, bagaimana cara menyikapi kejadian di area dan melaporkannya di sistem?">Kendala lapangan</button>
+                    <button type="button" class="cs-ai-chip" data-question="Setelah laporan dikirim, siapa yang memproses dan apa arti statusnya?">Alur status</button>
+                    <button type="button" class="cs-ai-chip" data-question="Jika butuh barang backup saat kendala, apa yang harus dilakukan?">Butuh backup</button>
+                    <button type="button" class="cs-ai-chip" data-question="Apa saja foto bukti yang sebaiknya diupload saat ada kendala parkir?">Foto bukti</button>
                 @elseif ($role === 'teknisi')
-                    <button type="button" class="cs-ai-chip" data-question="Bagaimana cara melihat laporan yang ditugaskan kepada teknisi?">Laporan ditugaskan</button>
-                    <button type="button" class="cs-ai-chip" data-question="Bagaimana cara mengupdate status penanganan laporan?">Update status</button>
-                    <button type="button" class="cs-ai-chip" data-question="Buatkan contoh catatan teknisi untuk laporan gate keluar sudah diperbaiki.">Template catatan</button>
-                    <button type="button" class="cs-ai-chip" data-question="Apa saja dokumentasi yang sebaiknya diupload teknisi setelah penanganan?">Dokumentasi penanganan</button>
+                    <button type="button" class="cs-ai-chip" data-question="Sebagai teknisi, apa yang harus dilakukan setelah menerima tugas laporan kendala?">Saat menerima tugas</button>
+                    <button type="button" class="cs-ai-chip" data-question="Bagaimana cara teknisi memberi update penanganan agar petugas dan manajer paham progresnya?">Update penanganan</button>
+                    <button type="button" class="cs-ai-chip" data-question="Buatkan contoh catatan teknisi untuk laporan gate keluar yang sudah dicek dan diperbaiki.">Template catatan</button>
+                    <button type="button" class="cs-ai-chip" data-question="Dokumentasi apa yang harus diupload teknisi agar laporan penanganan jelas?">Bukti teknisi</button>
                     <button type="button" class="cs-ai-chip" data-question="Apa arti status Menunggu Informasi dan Selesai Ditangani?">Arti status</button>
                     <button type="button" class="cs-ai-chip" data-question="Kalau bukti penanganan gagal upload, apa yang harus dicek?">Upload gagal</button>
                 @elseif ($role === 'manajer')
-                    <button type="button" class="cs-ai-chip" data-question="Bagaimana cara memverifikasi dan menugaskan laporan ke teknisi?">Assign teknisi</button>
-                    <button type="button" class="cs-ai-chip" data-question="Kapan laporan sebaiknya ditolak dan kapan sebaiknya ditutup?">Reject vs close</button>
-                    <button type="button" class="cs-ai-chip" data-question="Bagaimana cara melihat dan export laporan rekap?">Laporan rekap</button>
+                    <button type="button" class="cs-ai-chip" data-question="Sebagai manajer, apa yang harus dicek sebelum memverifikasi laporan dan menugaskan teknisi?">Verifikasi & assign</button>
+                    <button type="button" class="cs-ai-chip" data-question="Bagaimana manajer menyikapi laporan yang kurang lengkap, sudah selesai, atau perlu ditolak?">Sikap laporan</button>
+                    <button type="button" class="cs-ai-chip" data-question="Bagaimana laporan rekap membantu manajer memonitor kendala operasional parkir?">Laporan rekap</button>
                     <button type="button" class="cs-ai-chip" data-question="Bagaimana cara menyetujui atau menolak permintaan barang backup?">Approve backup</button>
-                    <button type="button" class="cs-ai-chip" data-question="Apa yang harus dicek sebelum laporan kendala ditutup?">Checklist close</button>
+                    <button type="button" class="cs-ai-chip" data-question="Apa checklist manajer sebelum menutup laporan kendala?">Checklist tutup</button>
                     <button type="button" class="cs-ai-chip" data-question="Apa arti status laporan kendala pada sistem?">Arti status</button>
                 @elseif ($role === 'admin')
-                    <button type="button" class="cs-ai-chip" data-question="Bagaimana cara membuat akun Petugas Parkir atau Teknisi Vendor?">Buat akun</button>
-                    <button type="button" class="cs-ai-chip" data-question="Sebagai Admin, data apa saja yang perlu disiapkan saat membuat akun pengguna?">Data akun baru</button>
+                    <button type="button" class="cs-ai-chip" data-question="Sebagai admin, bagaimana cara membantu user baru agar bisa memakai sistem?">Bantu user baru</button>
+                    <button type="button" class="cs-ai-chip" data-question="Data apa saja yang harus dicek admin sebelum membuat akun Petugas atau Teknisi?">Data akun</button>
                     <button type="button" class="cs-ai-chip" data-question="Bagaimana cara mengelola master lokasi parkir?">Master lokasi</button>
                     <button type="button" class="cs-ai-chip" data-question="Bagaimana cara mengelola master barang backup?">Master barang</button>
-                    <button type="button" class="cs-ai-chip" data-question="Bagaimana cara memproses permintaan backup yang sudah disetujui?">Proses backup</button>
-                    <button type="button" class="cs-ai-chip" data-question="Apa yang harus dilakukan jika pengguna lupa password?">Lupa password</button>
+                    <button type="button" class="cs-ai-chip" data-question="Sebagai admin, bagaimana proses barang backup yang sudah disetujui manajer?">Proses backup</button>
+                    <button type="button" class="cs-ai-chip" data-question="Jika pengguna tidak bisa login atau lupa password, bagaimana admin menyikapinya?">Kendala login</button>
                 @else
                     <button type="button" class="cs-ai-chip" data-question="Bagaimana cara menggunakan Sistem ELITE Parkir?">Panduan sistem</button>
                     <button type="button" class="cs-ai-chip" data-question="Apa saja fitur utama Sistem ELITE Parkir?">Fitur utama</button>
@@ -1748,7 +1776,7 @@ Halo {{ $firstName }}, saya CS ELITE Parkir. Silakan tanyakan panduan penggunaan
         <div class="cs-ai-footer">
             <div class="cs-ai-footer-note">
                 <i class="bi bi-info-circle-fill"></i>
-                <span>CS membantu memberikan panduan penggunaan sistem dan saran operasional. Keputusan dan perubahan data tetap mengikuti kewenangan role, Manajer, Admin Operasional, dan SOP yang berlaku.</span>
+                <span>CS by AI membantu menggantikan fungsi CS internal untuk arahan awal, panduan laporan, dan prosedur kendala operasional. Keputusan dan perubahan data tetap mengikuti kewenangan role serta SOP yang berlaku.</span>
             </div>
 
             <form class="cs-ai-form" id="csAiForm">
@@ -1963,6 +1991,57 @@ Halo {{ $firstName }}, saya CS ELITE Parkir. Silakan tanyakan panduan penggunaan
             });
         }
 
+        function escapeCsAiHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function normalizeCsAiMessage(message) {
+            return String(message || '')
+                .replace(/\r\n/g, '\n')
+                .replace(/\r/g, '\n')
+                .replace(/\*\*/g, '')
+                .replace(/__/g, '')
+                .replace(/^#{1,6}\s*/gm, '')
+                .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
+                .replace(/[ \t]+$/gm, '')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+        }
+
+        function formatCsAiMessageHtml(message) {
+            const normalized = normalizeCsAiMessage(message);
+
+            if (!normalized) {
+                return '';
+            }
+
+            const paragraphs = normalized.split(/\n{2,}/).filter(Boolean);
+
+            return paragraphs.map(function (paragraph) {
+                const lines = paragraph.split('\n').filter(function (line) {
+                    return line.trim() !== '';
+                });
+
+                const htmlLines = lines.map(function (line) {
+                    const cleanLine = line.trim();
+                    const escapedLine = escapeCsAiHtml(cleanLine);
+
+                    if (/^\d+[\).]\s+/.test(cleanLine) || /^[A-Za-zÀ-ÿ\s]+:$/.test(cleanLine)) {
+                        return '<span class="cs-ai-section-title">' + escapedLine + '</span>';
+                    }
+
+                    return '<span class="cs-ai-line">' + escapedLine + '</span>';
+                }).join('');
+
+                return '<p>' + htmlLines + '</p>';
+            }).join('');
+        }
+
         function appendCsAiMessage(type, message) {
             if (!csAiMessages) {
                 return;
@@ -1974,8 +2053,9 @@ Halo {{ $firstName }}, saya CS ELITE Parkir. Silakan tanyakan panduan penggunaan
             const bubble = document.createElement('div');
             bubble.className = 'cs-ai-bubble';
 
-            const messageText = document.createElement('span');
-            messageText.textContent = message;
+            const messageText = document.createElement('div');
+            messageText.className = 'cs-ai-content';
+            messageText.innerHTML = formatCsAiMessageHtml(message);
 
             const meta = document.createElement('span');
             meta.className = 'cs-ai-meta';
