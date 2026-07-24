@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackupItemController;
 use App\Http\Controllers\BackupRequestController;
@@ -37,15 +36,6 @@ Route::middleware('guest')->group(function () {
 */
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    /*
-    |--------------------------------------------------------------------------
-    | CS by AI
-    |--------------------------------------------------------------------------
-    | Route ini digunakan untuk fitur Customer Service berbasis AI.
-    | Hanya user login yang dapat mengakses agar penggunaan API tetap aman.
-    */
-    Route::post('/cs-ai/chat', [AiChatController::class, 'chat'])->name('cs-ai.chat');
 
     /*
     |--------------------------------------------------------------------------
